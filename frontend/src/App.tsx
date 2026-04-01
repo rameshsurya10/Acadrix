@@ -1,6 +1,25 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { AuthProvider } from '@/contexts/AuthContext'
+import { AuthProvider, useAuth, UserRole } from '@/contexts/AuthContext'
 import ProtectedRoute from '@/components/shared/ProtectedRoute'
+
+const ROLE_HOME: Record<UserRole, string> = {
+  admin:     '/admin/dashboard',
+  principal: '/principal/dashboard',
+  teacher:   '/teacher/dashboard',
+  student:   '/student/dashboard',
+  parent:    '/parent/payments',
+}
+
+function RootRedirect() {
+  const { user, isLoading } = useAuth()
+  if (isLoading) return (
+    <div className="min-h-screen flex items-center justify-center bg-surface">
+      <span className="material-symbols-outlined animate-spin text-primary text-4xl">progress_activity</span>
+    </div>
+  )
+  if (!user) return <Navigate to="/login" replace />
+  return <Navigate to={ROLE_HOME[user.role]} replace />
+}
 
 // Auth
 import LoginPage from '@/pages/auth/LoginPage'
@@ -42,7 +61,7 @@ export default function App() {
         <Routes>
           {/* Public */}
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/" element={<RootRedirect />} />
 
           {/* Admin */}
           <Route path="/admin" element={<ProtectedRoute role="admin" />}>
