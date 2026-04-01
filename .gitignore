@@ -1,0 +1,26 @@
+# Memory / session logs
+.remember/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+
+# Backend
+backend/.env
+backend/__pycache__/
+backend/**/__pycache__/
+backend/**/*.pyc
+backend/venv/
+backend/.venv/
+backend/staticfiles/
+backend/media/
+
+# Database
+database/*.sql
+*.dump
+
+# OS
+.DS_Store
+Thumbs.db
