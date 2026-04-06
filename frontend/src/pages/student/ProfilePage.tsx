@@ -1,19 +1,8 @@
+import PageLayout from '@/components/layout/PageLayout'
+
 export default function StudentProfilePage() {
   return (
-    <div className="bg-surface text-on-surface min-h-screen pb-24 md:pb-0">
-      {/* TopAppBar */}
-      <header className="w-full top-0 sticky z-50 bg-[#f8f9fa] flex items-center justify-between px-6 py-4 w-full">
-        <div className="flex items-center gap-3">
-          <img className="w-10 h-10 rounded-full object-cover" alt="User Profile" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC_ahn9Swha6fp6ZoTQ8WrvDgIQbWVVvKNm7zJmmSWR-PHyfSJFCOPsfLnqf1A7bAklI33Cesgvy_hGtgv2r78xuzYeQNB_0Jj6-22MYuVavO1CedJHsQSbUYuJqFBx1Ei4KyO8IEenssS_Befp-nyTkGiayFTIgi1UGT4mz-JMm3vwg8v6_9DokGcBgeodK0nGiTJ-auXWQqNMJyV_h3IwjW9r7nDAFljfOXgnA67BBAtCq0y8il33lnpXygklGRBgOF_qO66X-2yq" />
-          <span className="text-[#2b5ab5] font-manrope font-extrabold tracking-tight text-xl">Scholar Metric</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <button className="p-2 rounded-full hover:bg-[#e7e8e9] transition-colors scale-95 active:transition-transform">
-            <span className="material-symbols-outlined text-[#2b5ab5]">search</span>
-          </button>
-        </div>
-      </header>
-
+    <PageLayout>
       <main className="max-w-6xl mx-auto px-6 py-8">
         {/* Header Section: Editorial Contrast */}
         <div className="mb-10">
@@ -141,26 +130,6 @@ export default function StudentProfilePage() {
           </div>
         </div>
       </main>
-
-      {/* BottomNavBar */}
-      <nav className="md:hidden fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pb-6 pt-3 bg-[#ffffff]/80 backdrop-blur-xl border-t border-[#c1c6d6]/20 shadow-[0_-4px_32px_rgba(25,28,29,0.04)] z-50 rounded-t-2xl">
-        <div className="flex flex-col items-center justify-center text-[#414754] px-3 py-1 transition-all duration-300 ease-in-out hover:text-[#2b5ab5]">
-          <span className="material-symbols-outlined mb-1">grid_view</span>
-          <span className="font-inter text-[10px] font-medium uppercase tracking-wider">Dashboard</span>
-        </div>
-        <div className="flex flex-col items-center justify-center text-[#414754] px-3 py-1 transition-all duration-300 ease-in-out hover:text-[#2b5ab5]">
-          <span className="material-symbols-outlined mb-1">chat_bubble</span>
-          <span className="font-inter text-[10px] font-medium uppercase tracking-wider">Messages</span>
-        </div>
-        <div className="flex flex-col items-center justify-center text-[#414754] px-3 py-1 transition-all duration-300 ease-in-out hover:text-[#2b5ab5]">
-          <span className="material-symbols-outlined mb-1">group</span>
-          <span className="font-inter text-[10px] font-medium uppercase tracking-wider">Directory</span>
-        </div>
-        <div className="flex flex-col items-center justify-center bg-[#cfe6f2] text-[#2b5ab5] rounded-xl px-3 py-1 transition-all duration-300 ease-in-out">
-          <span className="material-symbols-outlined mb-1" style={{ fontVariationSettings: "'FILL' 1" }}>person</span>
-          <span className="font-inter text-[10px] font-medium uppercase tracking-wider">Profile</span>
-        </div>
-      </nav>
-    </div>
+    </PageLayout>
   );
 }

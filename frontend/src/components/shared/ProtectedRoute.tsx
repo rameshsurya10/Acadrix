@@ -6,7 +6,6 @@ const ROLE_HOME: Record<UserRole, string> = {
   principal: '/principal/dashboard',
   teacher: '/teacher/dashboard',
   student: '/student/dashboard',
-  parent: '/parent/payments',
 }
 
 interface Props {
@@ -18,18 +17,28 @@ export default function ProtectedRoute({ role }: Props) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-surface">
-        <span className="material-symbols-outlined animate-spin text-primary text-4xl">
-          progress_activity
-        </span>
+      <div className="min-h-screen bg-surface flex flex-col">
+        <div className="h-16 bg-surface-container-lowest border-b border-outline-variant/10 flex items-center px-6 gap-4">
+          <div className="w-8 h-8 rounded-lg bg-surface-container-high animate-pulse" />
+          <div className="w-24 h-4 rounded bg-surface-container-high animate-pulse" />
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="space-y-4 w-full max-w-sm px-8">
+            <div className="w-40 h-5 rounded bg-surface-container-high animate-pulse mx-auto" />
+            <div className="w-full h-3 rounded bg-surface-container-high animate-pulse" />
+            <div className="w-3/4 h-3 rounded bg-surface-container-high animate-pulse" />
+          </div>
+        </div>
       </div>
     )
   }
 
   if (!user) return <Navigate to="/login" replace />
 
-  if (role !== 'any' && user.role !== role) {
-    return <Navigate to={ROLE_HOME[user.role]} replace />
+  if (role !== 'any') {
+    if (user.role !== role) {
+      return <Navigate to={ROLE_HOME[user.role]} replace />
+    }
   }
 
   return <Outlet />

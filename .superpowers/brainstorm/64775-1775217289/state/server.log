@@ -1,0 +1,6 @@
+{"type":"server-started","port":65377,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:65377","screen_dir":"/home/development1/Desktop/Acadrix/.superpowers/brainstorm/64775-1775217289/content","state_dir":"/home/development1/Desktop/Acadrix/.superpowers/brainstorm/64775-1775217289/state"}
+{"type":"screen-added","file":"/home/development1/Desktop/Acadrix/.superpowers/brainstorm/64775-1775217289/content/login-flow.html"}
+{"source":"user-event","type":"click","text":"A\n      \n        Yes, this is exactly right\n        All 4 paths (ID+password, ID+set password, Email+OTP, Email not found) look correct","choice":"yes-perfect","id":null,"timestamp":1775217414099}
+{"source":"user-event","type":"click","text":"A\n      \n        Yes, this is exactly right\n        All 4 paths (ID+password, ID+set password, Email+OTP, Email not found) look correct","choice":"yes-perfect","id":null,"timestamp":1775217414731}
+{"type":"screen-added","file":"/home/development1/Desktop/Acadrix/.superpowers/brainstorm/64775-1775217289/content/waiting.html"}
+{"type":"server-stopped","reason":"idle timeout"}

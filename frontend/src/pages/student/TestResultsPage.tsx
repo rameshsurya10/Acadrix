@@ -1,53 +1,9 @@
+import PageLayout from '@/components/layout/PageLayout'
+
 export default function StudentTestResultsPage() {
   return (
-    <div className="bg-background text-on-background min-h-screen flex flex-col md:flex-row">
-      {/* NavigationDrawer (Desktop) */}
-      <aside className="hidden md:flex flex-col border-r border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 h-screen w-64 fixed left-0 top-0 z-50">
-        <div className="px-6 py-8">
-          <h1 className="text-lg font-black text-blue-900 dark:text-blue-100 font-headline uppercase tracking-tighter">Academic Suite</h1>
-        </div>
-        <nav className="flex-1 px-3 space-y-1">
-          <a className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-blue-600 transition-all duration-200 ease-in-out hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg" href="#">
-            <span className="material-symbols-outlined">dashboard</span>
-            <span className="text-xs font-semibold uppercase tracking-wider font-label">Dashboard</span>
-          </a>
-          <a className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-blue-600 transition-all duration-200 ease-in-out hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg" href="#">
-            <span className="material-symbols-outlined">quiz</span>
-            <span className="text-xs font-semibold uppercase tracking-wider font-label">Assessment Lab</span>
-          </a>
-          <a className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-blue-600 transition-all duration-200 ease-in-out hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg" href="#">
-            <span className="material-symbols-outlined">school</span>
-            <span className="text-xs font-semibold uppercase tracking-wider font-label">Class Management</span>
-          </a>
-          <a className="flex items-center gap-3 px-4 py-3 text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/20 rounded-lg transition-all duration-200 ease-in-out" href="#">
-            <span className="material-symbols-outlined">analytics</span>
-            <span className="text-xs font-semibold uppercase tracking-wider font-label">Results</span>
-          </a>
-          <a className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-blue-600 transition-all duration-200 ease-in-out hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg" href="#">
-            <span className="material-symbols-outlined">psychology</span>
-            <span className="text-xs font-semibold uppercase tracking-wider font-label">AI Generator</span>
-          </a>
-        </nav>
-      </aside>
-
+    <PageLayout sidebar>
       <main className="flex-1 md:ml-64 pb-24 md:pb-8">
-        {/* TopAppBar */}
-        <header className="flex justify-between items-center px-6 py-4 w-full bg-slate-50 dark:bg-slate-950 top-0 sticky z-40">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center overflow-hidden">
-              <img alt="User Profile" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCjPxnqgau5IQd4ZqVBdDI0d9f-rXXHZtdAdxuEMrobqW8vGqKhSuTKWvHETBQDSPfnMHvlpjwgvKil-f-JAFSUKhDdjbhgK16K3BTojnE9W9UvsHQft4X5bSyvhmZhplcX4HjQ8t99dpoMusofo6GXzUj2UWYaQiWPJOVsLj1apVkwWWQU8c-CwiuMdfOh4NSGBfL4WAyNxjn_jSK4RWlxKjV-0WL_yh-JOo6fMHUFom6FAGITafJLzmMjeWmsdjS6lFvYN9ISjHip" />
-            </div>
-            <div>
-              <span className="text-2xl font-bold tracking-tight text-blue-800 dark:text-blue-300 font-headline">Scholar Metric</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <button className="p-2 rounded-full hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-colors scale-95 active:duration-100 text-slate-600 dark:text-slate-400">
-              <span className="material-symbols-outlined">notifications</span>
-            </button>
-          </div>
-        </header>
-
         {/* Main Content Canvas */}
         <div className="p-6 md:p-10 max-w-7xl mx-auto space-y-10">
           {/* Page Header */}
@@ -200,26 +156,6 @@ export default function StudentTestResultsPage() {
           </div>
         </div>
       </main>
-
-      {/* BottomNavBar (Mobile) */}
-      <nav className="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-4 pt-2 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-t border-slate-200/50 dark:border-slate-800/50 shadow-lg dark:shadow-none">
-        <a className="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 active:bg-slate-100 dark:active:bg-slate-800 transition-all scale-90 duration-150 rounded-xl px-3 py-1" href="#">
-          <span className="material-symbols-outlined">home</span>
-          <span className="text-[10px] font-medium font-label">Home</span>
-        </a>
-        <a className="flex flex-col items-center justify-center text-blue-700 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-900/30 transition-all scale-90 duration-150 rounded-xl px-3 py-1" href="#">
-          <span className="material-symbols-outlined">assignment</span>
-          <span className="text-[10px] font-medium font-label">Tests</span>
-        </a>
-        <a className="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 active:bg-slate-100 dark:active:bg-slate-800 transition-all scale-90 duration-150 rounded-xl px-3 py-1" href="#">
-          <span className="material-symbols-outlined">auto_awesome</span>
-          <span className="text-[10px] font-medium font-label">AI Gen</span>
-        </a>
-        <a className="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 active:bg-slate-100 dark:active:bg-slate-800 transition-all scale-90 duration-150 rounded-xl px-3 py-1" href="#">
-          <span className="material-symbols-outlined">account_circle</span>
-          <span className="text-[10px] font-medium font-label">Profile</span>
-        </a>
-      </nav>
-    </div>
+    </PageLayout>
   );
 }

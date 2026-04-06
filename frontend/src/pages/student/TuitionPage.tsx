@@ -1,27 +1,8 @@
+import PageLayout from '@/components/layout/PageLayout'
+
 export default function StudentTuitionPage() {
   return (
-    <div className="text-on-surface">
-      {/* TopAppBar */}
-      <header className="bg-[#f8f9fa] dark:bg-[#191c1d] top-0 sticky z-50">
-        <div className="flex justify-between items-center w-full px-6 py-3">
-          <div className="flex items-center gap-3">
-            <span className="material-symbols-outlined text-[#1A73E8] dark:text-[#4874cf] text-2xl">school</span>
-            <h1 className="font-['Manrope'] font-bold text-lg tracking-tight text-on-surface">Editorial Intelligence</h1>
-          </div>
-          <div className="flex items-center gap-6">
-            <nav className="hidden md:flex gap-8">
-              <a className="text-[#414754] dark:text-[#c1c6d6] font-['Inter'] font-medium text-sm hover:text-[#1A73E8] transition-colors" href="#">Dashboard</a>
-              <a className="text-[#414754] dark:text-[#c1c6d6] font-['Inter'] font-medium text-sm hover:text-[#1A73E8] transition-colors" href="#">Modules</a>
-              <a className="text-[#414754] dark:text-[#c1c6d6] font-['Inter'] font-medium text-sm hover:text-[#1A73E8] transition-colors" href="#">Schedule</a>
-              <a className="text-[#1A73E8] font-bold font-['Inter'] text-sm" href="#">Billing</a>
-            </nav>
-            <div className="w-8 h-8 rounded-full bg-surface-container-high overflow-hidden">
-              <img alt="Profile" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAiIhPlRRdrx8tc6MJy5dMqicZH5FUEO8PXzb570gBBIzNnoxKh_ADk9h7ptb7lB6Q8kETvBvd8M1KjvPhKtxORGfepkLm-feG-eGPo_EgK1nqW7nfE_SxY33ns_tgxhMkl5L5w9-bIxejFO5YGRZFyF_WEeYSta-FQ-bY791084kbTy-mtUVxrg4nZ1uAKMUNtYigfuOT4MXXy_Lh2cbA9WonlcOsnhy1tTZ2diQIhkBS3QjFeNAUWcy5FslFWbHHo_l3QD_rJusxo" />
-            </div>
-          </div>
-        </div>
-      </header>
-
+    <PageLayout>
       <main className="max-w-7xl mx-auto px-6 py-12 pb-32">
         {/* Editorial Header Section */}
         <div className="mb-12">
@@ -175,26 +156,6 @@ export default function StudentTuitionPage() {
           </aside>
         </div>
       </main>
-
-      {/* BottomNavBar (Mobile only) */}
-      <nav className="md:hidden fixed bottom-0 w-full z-50 rounded-t-2xl bg-[#ffffff] dark:bg-[#1f2122] shadow-[0_-4px_32px_rgba(25,28,29,0.04)] h-20 px-4 flex justify-around items-center">
-        <div className="flex flex-col items-center justify-center text-[#414754] dark:text-[#c1c6d6] px-4 py-1 hover:bg-[#f3f4f5] transition-all">
-          <span className="material-symbols-outlined">grid_view</span>
-          <span className="font-['Inter'] font-medium text-[10px] uppercase tracking-widest mt-1">Dashboard</span>
-        </div>
-        <div className="flex flex-col items-center justify-center text-[#414754] dark:text-[#c1c6d6] px-4 py-1 hover:bg-[#f3f4f5] transition-all">
-          <span className="material-symbols-outlined">extension</span>
-          <span className="font-['Inter'] font-medium text-[10px] uppercase tracking-widest mt-1">Modules</span>
-        </div>
-        <div className="flex flex-col items-center justify-center text-[#414754] dark:text-[#c1c6d6] px-4 py-1 hover:bg-[#f3f4f5] transition-all">
-          <span className="material-symbols-outlined">calendar_month</span>
-          <span className="font-['Inter'] font-medium text-[10px] uppercase tracking-widest mt-1">Schedule</span>
-        </div>
-        <div className="flex flex-col items-center justify-center bg-[#cfe6f2] dark:bg-[#2b5ab5]/20 text-[#2b5ab5] dark:text-[#4874cf] rounded-xl px-4 py-1 transition-all">
-          <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>payments</span>
-          <span className="font-['Inter'] font-medium text-[10px] uppercase tracking-widest mt-1">Billing</span>
-        </div>
-      </nav>
-    </div>
+    </PageLayout>
   );
 }

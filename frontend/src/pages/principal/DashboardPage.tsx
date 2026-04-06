@@ -1,31 +1,8 @@
+import PageLayout from '@/components/layout/PageLayout'
+
 export default function PrincipalDashboardPage() {
   return (
-    <div className="bg-surface text-on-surface min-h-screen pb-24 md:pb-0">
-      {/* TopAppBar */}
-      <header className="bg-[#f8f9fa] dark:bg-[#191c1d] sticky top-0 z-50">
-        <div className="flex justify-between items-center w-full px-6 py-3">
-          <div className="flex items-center gap-3">
-            <span className="material-symbols-outlined text-[#1A73E8] dark:text-[#4874cf]">school</span>
-            <span className="text-xl font-black text-[#1A73E8] dark:text-[#4874cf] font-['Manrope']">Editorial Intelligence</span>
-          </div>
-          <nav className="hidden md:flex items-center gap-8">
-            <a className="text-[#1A73E8] font-bold font-['Manrope'] transition-colors" href="#">Dashboard</a>
-            <a className="text-[#414754] dark:text-[#c1c6d6] font-['Manrope'] hover:bg-[#e7e8e9] dark:hover:bg-[#3e4243] transition-colors px-2 py-1 rounded" href="#">Modules</a>
-            <a className="text-[#414754] dark:text-[#c1c6d6] font-['Manrope'] hover:bg-[#e7e8e9] dark:hover:bg-[#3e4243] transition-colors px-2 py-1 rounded" href="#">Schedule</a>
-            <a className="text-[#414754] dark:text-[#c1c6d6] font-['Manrope'] hover:bg-[#e7e8e9] dark:hover:bg-[#3e4243] transition-colors px-2 py-1 rounded" href="#">Alerts</a>
-          </nav>
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-full overflow-hidden bg-surface-container-highest">
-              <img
-                alt="User Profile"
-                className="w-full h-full object-cover"
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuA8--JdSzwFyQdnqu2rMM53umk-bkc5Ej4peoSXID5_KSjkb0-DhwF7dLMtMwahQbOtNt5W4ruTRqb_w_HWAJy5PJPp879pwOrx1sZEpvn7BPp0hiN9QwJMO51lbXryDM75_oIrjuMUPDj3PQu7-S7PJz7fqs7RN6a9sl_Pshe0-w8Gn4YsMqnxQgbVpi1FIXL5W4uvyd_TaYWFRVl4tNfCjSec0Fn7eBTKIvLz945pP4iMBp98n1WPmAbh2k1eLT5putJFD84Lw3hy"
-              />
-            </div>
-          </div>
-        </div>
-      </header>
-
+    <PageLayout>
       <main className="max-w-7xl mx-auto px-6 py-8 space-y-10">
         {/* Welcome & Editorial Header */}
         <section className="space-y-1">
@@ -247,31 +224,6 @@ export default function PrincipalDashboardPage() {
           </div>
         </section>
       </main>
-
-      {/* BottomNavBar (Mobile Only) */}
-      <nav className="md:hidden bg-[#ffffff] dark:bg-[#1f2122] fixed bottom-0 w-full z-50 rounded-t-2xl shadow-[0_-4px_32px_rgba(25,28,29,0.04)] flex justify-around items-center h-20 px-4">
-        <a className="flex flex-col items-center justify-center bg-[#cfe6f2] dark:bg-[#2b5ab5]/20 text-[#2b5ab5] dark:text-[#4874cf] rounded-xl px-4 py-1 transition-all duration-200" href="#">
-          <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>grid_view</span>
-          <span className="font-['Inter'] font-medium text-[10px] uppercase tracking-widest mt-1">Dashboard</span>
-        </a>
-        <a className="flex flex-col items-center justify-center text-[#414754] dark:text-[#c1c6d6] px-4 py-1 transition-all duration-200" href="#">
-          <span className="material-symbols-outlined">extension</span>
-          <span className="font-['Inter'] font-medium text-[10px] uppercase tracking-widest mt-1">Modules</span>
-        </a>
-        <a className="flex flex-col items-center justify-center text-[#414754] dark:text-[#c1c6d6] px-4 py-1 transition-all duration-200" href="#">
-          <span className="material-symbols-outlined">calendar_month</span>
-          <span className="font-['Inter'] font-medium text-[10px] uppercase tracking-widest mt-1">Schedule</span>
-        </a>
-        <a className="flex flex-col items-center justify-center text-[#414754] dark:text-[#c1c6d6] px-4 py-1 transition-all duration-200" href="#">
-          <span className="material-symbols-outlined">notifications_active</span>
-          <span className="font-['Inter'] font-medium text-[10px] uppercase tracking-widest mt-1">Alerts</span>
-        </a>
-      </nav>
-
-      {/* Floating Action Button */}
-      <button className="fixed bottom-24 right-6 md:bottom-8 md:right-8 w-14 h-14 bg-gradient-to-br from-primary to-primary-container text-on-primary rounded-full shadow-xl flex items-center justify-center hover:scale-110 active:scale-90 transition-transform z-40">
-        <span className="material-symbols-outlined text-3xl">add</span>
-      </button>
-    </div>
+    </PageLayout>
   );
 }

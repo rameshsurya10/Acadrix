@@ -1,34 +1,8 @@
+import PageLayout from '@/components/layout/PageLayout'
+
 export default function TeacherDashboardPage() {
   return (
-    <div className="bg-surface text-on-surface">
-      {/* TopAppBar */}
-      <header className="bg-[#f8f9fa] dark:bg-[#191c1d] sticky top-0 z-50">
-        <div className="flex justify-between items-center w-full px-6 py-3">
-          <div className="flex items-center gap-3">
-            <span className="material-symbols-outlined text-[#1A73E8] dark:text-[#4874cf]">school</span>
-            <h1 className="font-['Manrope'] font-bold text-lg tracking-tight text-[#1A73E8] dark:text-[#4874cf]">Editorial Intelligence</h1>
-          </div>
-          <div className="hidden md:flex items-center gap-8">
-            <nav className="flex items-center gap-6">
-              <a className="text-[#1A73E8] font-bold" href="#">Dashboard</a>
-              <a className="text-[#414754] dark:text-[#c1c6d6] hover:bg-[#e7e8e9] dark:hover:bg-[#3e4243] transition-colors px-2 py-1 rounded" href="#">Modules</a>
-              <a className="text-[#414754] dark:text-[#c1c6d6] hover:bg-[#e7e8e9] dark:hover:bg-[#3e4243] transition-colors px-2 py-1 rounded" href="#">Schedule</a>
-              <a className="text-[#414754] dark:text-[#c1c6d6] hover:bg-[#e7e8e9] dark:hover:bg-[#3e4243] transition-colors px-2 py-1 rounded" href="#">Alerts</a>
-            </nav>
-            <div className="w-8 h-8 rounded-full bg-surface-container-high overflow-hidden">
-              <img
-                alt="User Profile"
-                className="w-full h-full object-cover"
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuBH9LyLuLdjhk2Pepw3338yX6daWzfkTr8uzzcmx4OR1pre9DVxc5jPirtsIdvPy_utGjXUTBHkpS9JSFpaPyz6TZUuXBw2uV5paN8ENWJrJYl2oSKBJK15w6g9IP8WHkl6DkbcCmP-gjsbV-03LhVquAxGai2Uh2q3DZAu6V2lizo-553ShD-wzeE-9isuyNytvaxUdl2Ze3xAEatIPO_rSUSzS7-nA-oq8Ix8ebY06XMGLyDTh7vIUhTQ4Q6Xhm_lc0GLohzfkRt0"
-              />
-            </div>
-          </div>
-          <div className="md:hidden">
-            <span className="material-symbols-outlined">menu</span>
-          </div>
-        </div>
-      </header>
-
+    <PageLayout>
       <main className="max-w-7xl mx-auto px-6 py-10 pb-32">
         {/* Dashboard Header */}
         <div className="mb-10">
@@ -194,28 +168,6 @@ export default function TeacherDashboardPage() {
           </aside>
         </div>
       </main>
-
-      {/* BottomNavBar (Mobile Only) */}
-      <nav className="md:hidden bg-[#ffffff] dark:bg-[#1f2122] fixed bottom-0 w-full z-50 rounded-t-2xl shadow-[0_-4px_32px_rgba(25,28,29,0.04)]">
-        <div className="flex justify-around items-center w-full h-20 px-4">
-          <div className="flex flex-col items-center justify-center bg-[#cfe6f2] dark:bg-[#2b5ab5]/20 text-[#2b5ab5] dark:text-[#4874cf] rounded-xl px-4 py-1 transition-all duration-200">
-            <span className="material-symbols-outlined">grid_view</span>
-            <span className="font-['Inter'] font-medium text-[10px] uppercase tracking-widest">Dashboard</span>
-          </div>
-          <div className="flex flex-col items-center justify-center text-[#414754] dark:text-[#c1c6d6] px-4 py-1 hover:bg-[#f3f4f5] dark:hover:bg-[#2a2d2e] transition-all duration-200">
-            <span className="material-symbols-outlined">extension</span>
-            <span className="font-['Inter'] font-medium text-[10px] uppercase tracking-widest">Modules</span>
-          </div>
-          <div className="flex flex-col items-center justify-center text-[#414754] dark:text-[#c1c6d6] px-4 py-1 hover:bg-[#f3f4f5] dark:hover:bg-[#2a2d2e] transition-all duration-200">
-            <span className="material-symbols-outlined">calendar_month</span>
-            <span className="font-['Inter'] font-medium text-[10px] uppercase tracking-widest">Schedule</span>
-          </div>
-          <div className="flex flex-col items-center justify-center text-[#414754] dark:text-[#c1c6d6] px-4 py-1 hover:bg-[#f3f4f5] dark:hover:bg-[#2a2d2e] transition-all duration-200">
-            <span className="material-symbols-outlined">notifications_active</span>
-            <span className="font-['Inter'] font-medium text-[10px] uppercase tracking-widest">Alerts</span>
-          </div>
-        </div>
-      </nav>
-    </div>
+    </PageLayout>
   );
 }

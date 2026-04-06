@@ -7,14 +7,25 @@ const ROLE_HOME: Record<UserRole, string> = {
   principal: '/principal/dashboard',
   teacher:   '/teacher/dashboard',
   student:   '/student/dashboard',
-  parent:    '/parent/payments',
 }
 
 function RootRedirect() {
   const { user, isLoading } = useAuth()
   if (isLoading) return (
-    <div className="min-h-screen flex items-center justify-center bg-surface">
-      <span className="material-symbols-outlined animate-spin text-primary text-4xl">progress_activity</span>
+    <div className="min-h-screen bg-[#f8f9fa] flex flex-col">
+      {/* Skeleton header */}
+      <div className="h-16 bg-surface-container-lowest border-b border-outline-variant/10 flex items-center px-6 gap-4">
+        <div className="w-8 h-8 rounded-lg bg-surface-container-high animate-pulse" />
+        <div className="w-24 h-4 rounded bg-surface-container-high animate-pulse" />
+      </div>
+      <div className="flex-1 flex items-center justify-center">
+        <div className="space-y-6 w-full max-w-md px-8">
+          <div className="w-48 h-6 rounded bg-surface-container-high animate-pulse mx-auto" />
+          <div className="w-full h-4 rounded bg-surface-container-high animate-pulse" />
+          <div className="w-3/4 h-4 rounded bg-surface-container-high animate-pulse" />
+          <div className="w-1/2 h-4 rounded bg-surface-container-high animate-pulse" />
+        </div>
+      </div>
     </div>
   )
   if (!user) return <Navigate to="/login" replace />
@@ -23,6 +34,12 @@ function RootRedirect() {
 
 // Auth
 import LoginPage from '@/pages/auth/LoginPage'
+import GoogleCallbackPage from '@/pages/auth/GoogleCallbackPage'
+
+// Public
+import PrivacyPolicyPage from '@/pages/public/PrivacyPolicyPage'
+import TermsOfServicePage from '@/pages/public/TermsOfServicePage'
+import HelpCenterPage from '@/pages/public/HelpCenterPage'
 
 // Admin
 import AdminDashboard from '@/pages/admin/DashboardPage'
@@ -30,6 +47,7 @@ import AdminAdmissions from '@/pages/admin/AdmissionsPage'
 import AdminAssessments from '@/pages/admin/AssessmentsPage'
 import AdminFinance from '@/pages/admin/FinancePage'
 import AdminStudents from '@/pages/admin/StudentsPage'
+import AdminProfile from '@/pages/admin/ProfilePage'
 
 // Principal
 import PrincipalDashboard from '@/pages/principal/DashboardPage'
@@ -46,8 +64,12 @@ import StudentProfile from '@/pages/student/ProfilePage'
 import TestResults from '@/pages/student/TestResultsPage'
 import Tuition from '@/pages/student/TuitionPage'
 
-// Parent
-import ParentPayments from '@/pages/parent/PaymentsPage'
+// Payments
+import PaymentsPage from '@/pages/student/PaymentsPage'
+
+// Enrollment
+import AdminEnrollment from '@/pages/admin/EnrollmentPage'
+import TeacherEnrollment from '@/pages/teacher/EnrollmentPage'
 
 // Shared
 import MessagingCenter from '@/pages/shared/MessagingPage'
@@ -61,6 +83,10 @@ export default function App() {
         <Routes>
           {/* Public */}
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
+          <Route path="/privacy" element={<PrivacyPolicyPage />} />
+          <Route path="/terms" element={<TermsOfServicePage />} />
+          <Route path="/help" element={<HelpCenterPage />} />
           <Route path="/" element={<RootRedirect />} />
 
           {/* Admin */}
@@ -70,12 +96,15 @@ export default function App() {
             <Route path="assessments" element={<AdminAssessments />} />
             <Route path="finance" element={<AdminFinance />} />
             <Route path="students" element={<AdminStudents />} />
+            <Route path="profile" element={<AdminProfile />} />
+            <Route path="enrollment" element={<AdminEnrollment />} />
           </Route>
 
           {/* Principal */}
           <Route path="/principal" element={<ProtectedRoute role="principal" />}>
             <Route path="dashboard" element={<PrincipalDashboard />} />
             <Route path="question-generator" element={<QuestionGenerator />} />
+            <Route path="enrollment" element={<AdminEnrollment />} />
           </Route>
 
           {/* Teacher */}
@@ -83,6 +112,7 @@ export default function App() {
             <Route path="dashboard" element={<TeacherDashboard />} />
             <Route path="gradebook" element={<Gradebook />} />
             <Route path="tests" element={<TestCreation />} />
+            <Route path="enrollment" element={<TeacherEnrollment />} />
           </Route>
 
           {/* Student */}
@@ -91,14 +121,10 @@ export default function App() {
             <Route path="profile" element={<StudentProfile />} />
             <Route path="results" element={<TestResults />} />
             <Route path="tuition" element={<Tuition />} />
+            <Route path="payments" element={<PaymentsPage />} />
           </Route>
 
-          {/* Parent */}
-          <Route path="/parent" element={<ProtectedRoute role="parent" />}>
-            <Route path="payments" element={<ParentPayments />} />
-          </Route>
-
-          {/* Shared (multi-role) */}
+          {/* Shared (all roles) */}
           <Route path="/messaging" element={<ProtectedRoute role="any" />}>
             <Route index element={<MessagingCenter />} />
           </Route>

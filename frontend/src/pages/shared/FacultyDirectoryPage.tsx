@@ -1,51 +1,8 @@
+import PageLayout from '@/components/layout/PageLayout'
+
 export default function FacultyDirectoryPage() {
   return (
-    <div className="bg-background text-on-surface min-h-screen pb-24 md:pb-0 md:pl-64">
-      {/* Sidebar Navigation (Desktop) */}
-      <aside className="hidden md:flex h-screen w-64 fixed left-0 top-0 flex-col p-6 gap-4 bg-[#f3f4f5] dark:bg-slate-900 z-40">
-        <div className="mb-8">
-          <span className="font-manrope text-lg font-bold text-[#191c1d]">Editorial Intelligence</span>
-        </div>
-        <nav className="space-y-2">
-          <a className="flex items-center gap-3 px-4 py-3 text-[#414754] dark:text-slate-400 hover:text-[#191c1d] hover:bg-[#e7e8e9] dark:hover:bg-slate-800 transition-all" href="#">
-            <span className="material-symbols-outlined">grid_view</span>
-            <span className="font-manrope uppercase tracking-widest text-[10px] font-semibold">Gradebook</span>
-          </a>
-          <a className="flex items-center gap-3 px-4 py-3 text-[#414754] dark:text-slate-400 hover:text-[#191c1d] hover:bg-[#e7e8e9] dark:hover:bg-slate-800 transition-all" href="#">
-            <span className="material-symbols-outlined">how_to_reg</span>
-            <span className="font-manrope uppercase tracking-widest text-[10px] font-semibold">Admissions</span>
-          </a>
-          <a className="flex items-center gap-3 px-4 py-3 bg-white dark:bg-slate-800 text-[#2b5ab5] dark:text-[#4874cf] rounded-lg shadow-sm translate-x-1 duration-200" href="#">
-            <span className="material-symbols-outlined">badge</span>
-            <span className="font-manrope uppercase tracking-widest text-[10px] font-semibold">Faculty</span>
-          </a>
-          <a className="flex items-center gap-3 px-4 py-3 text-[#414754] dark:text-slate-400 hover:text-[#191c1d] hover:bg-[#e7e8e9] dark:hover:bg-slate-800 transition-all" href="#">
-            <span className="material-symbols-outlined">group</span>
-            <span className="font-manrope uppercase tracking-widest text-[10px] font-semibold">Students</span>
-          </a>
-        </nav>
-      </aside>
-
-      {/* Top App Bar */}
-      <header className="flex justify-between items-center w-full px-8 py-4 bg-[#f8f9fa] dark:bg-slate-950 sticky top-0 z-30">
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-full overflow-hidden bg-surface-container-high">
-            <img alt="User Profile" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDLARFgUtSSuYqfM98HbcV4yvi0_iWnSzM15-13mrJLmisG8QzcsOZS5qJRORLHRMgwDzIhXZ7ktLWaDzVP85uFFsjlgtl_X8kgBWSHdaNDUhi6RlwbCi7EYeBc52h56i-33JrHXu3hdXSzzjgWaAzGRFiN8AeJshhoh7qmRGO9TJDpz_ITsZsrdh6tr0wfzpmhC5Y5vuj4IUbHIX5YMrEqhX73p5igGysFkABbSOB19aAC3_5ruZD-R9hrbEfiue93lp1CsScZouRU" />
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight text-[#191c1d] dark:text-slate-100 font-headline">Scholar Metric</h1>
-        </div>
-        <div className="flex items-center gap-4">
-          <button className="p-2 text-[#414754] dark:text-slate-400 hover:bg-[#e7e8e9] dark:hover:bg-slate-800 rounded-full transition-colors">
-            <span className="material-symbols-outlined">search</span>
-          </button>
-          <button className="hidden md:flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary to-primary-container text-on-primary rounded-lg font-medium shadow-sm active:scale-95 duration-150">
-            <span className="material-symbols-outlined text-sm">add</span>
-            <span className="text-sm">Add New Staff</span>
-          </button>
-        </div>
-      </header>
-
-      {/* Main Canvas */}
+    <PageLayout>
       <main className="max-w-7xl mx-auto px-6 py-8 md:px-12">
         {/* Editorial Header Section */}
         <section className="mb-12">
@@ -229,26 +186,6 @@ export default function FacultyDirectoryPage() {
           </div>
         </section>
       </main>
-
-      {/* Bottom Navigation Bar (Mobile only) */}
-      <nav className="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-2 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[0_-4px_32px_rgba(25,28,29,0.04)] rounded-t-2xl">
-        <a className="flex flex-col items-center justify-center text-[#2b5ab5] dark:text-[#4874cf] scale-110 active:scale-90 transition-transform" href="#">
-          <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>edit_note</span>
-          <span className="font-inter text-[10px] font-medium">Grades</span>
-        </a>
-        <a className="flex flex-col items-center justify-center text-[#414754] dark:text-slate-500 hover:opacity-80 active:scale-90 transition-transform" href="#">
-          <span className="material-symbols-outlined">cloud_upload</span>
-          <span className="font-inter text-[10px] font-medium">Entry</span>
-        </a>
-        <a className="flex flex-col items-center justify-center text-[#414754] dark:text-slate-500 hover:opacity-80 active:scale-90 transition-transform" href="#">
-          <span className="material-symbols-outlined">payments</span>
-          <span className="font-inter text-[10px] font-medium">Staff</span>
-        </a>
-        <a className="flex flex-col items-center justify-center text-[#414754] dark:text-slate-500 hover:opacity-80 active:scale-90 transition-transform" href="#">
-          <span className="material-symbols-outlined">folder_shared</span>
-          <span className="font-inter text-[10px] font-medium">Directory</span>
-        </a>
-      </nav>
-    </div>
+    </PageLayout>
   );
 }

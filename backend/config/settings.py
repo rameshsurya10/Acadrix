@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     # Third-party
     'rest_framework',
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
     'django_filters',
     'drf_spectacular',
@@ -30,7 +31,7 @@ INSTALLED_APPS = [
     'apps.principal',
     'apps.teacher',
     'apps.student',
-    'apps.parent',
+    # parent endpoints merged into apps.student
     'apps.shared',
 ]
 
@@ -66,10 +67,25 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 DATABASES = {
-    'default': env.db('DATABASE_URL', default='postgres://scholar:scholar_pass@localhost:5432/scholar_metric')
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'HOST': env('DB_HOST', default='localhost'),
+        'PORT': env.int('DB_PORT', default=5432),
+        'NAME': env('DB_NAME', default='postgres'),
+        'USER': env('DB_USER', default='postgres'),
+        'PASSWORD': env('DB_PASSWORD', default=''),
+        'OPTIONS': {
+            'sslmode': 'require',
+        },
+    }
 }
 
 AUTH_USER_MODEL = 'accounts.User'
+
+AUTHENTICATION_BACKENDS = [
+    'apps.accounts.backends.MultiMethodAuthBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
@@ -104,6 +120,18 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 25,
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '20/minute',
+        'user': '60/minute',
+        'login': '5/minute',
+        'identify': '10/minute',
+        'otp': '5/minute',
+        'forgot_password': '3/minute',
+    },
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
@@ -117,6 +145,20 @@ SIMPLE_JWT = {
 
 # ─── CORS ─────────────────────────────────────────────────────────────────────
 CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=['http://localhost:5173'])
+
+# ─── Email / SMTP ───────────────────────────────────────────────────────────
+EMAIL_BACKEND = env('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
+EMAIL_HOST = env('EMAIL_HOST', default='smtp.gmail.com')
+EMAIL_PORT = env.int('EMAIL_PORT', default=587)
+EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS', default=True)
+EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
+DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='Acadrix <noreply@acadrix.com>')
+
+# ─── Google OAuth2 ──────────────────────────────────────────────────────────
+GOOGLE_CLIENT_ID = env('GOOGLE_CLIENT_ID', default='')
+GOOGLE_CLIENT_SECRET = env('GOOGLE_CLIENT_SECRET', default='')
+GOOGLE_REDIRECT_URI = env('GOOGLE_REDIRECT_URI', default='http://localhost:3000/auth/google/callback')
 
 # ─── API Docs ────────────────────────────────────────────────────────────────
 SPECTACULAR_SETTINGS = {

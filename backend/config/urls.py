@@ -11,7 +11,7 @@ urlpatterns = [
     path('api/v1/principal/', include('apps.principal.urls')),
     path('api/v1/teacher/',   include('apps.teacher.urls')),
     path('api/v1/student/',   include('apps.student.urls')),
-    path('api/v1/parent/',    include('apps.parent.urls')),
+    # parent endpoints merged into apps.student
     path('api/v1/shared/',    include('apps.shared.urls')),
 
     # OpenAPI docs

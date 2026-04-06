@@ -1,24 +1,8 @@
+import PageLayout from '@/components/layout/PageLayout'
+
 export default function StudentDashboardPage() {
   return (
-    <div className="bg-[#f8f9fa] text-on-surface min-h-screen">
-      {/* TopAppBar */}
-      <header className="bg-[#f8f9fa] dark:bg-[#191c1d] top-0 sticky z-50 flex justify-between items-center w-full px-6 py-3">
-        <div className="flex items-center gap-3">
-          <span className="material-symbols-outlined text-[#1A73E8] dark:text-[#4874cf]">school</span>
-          <span className="text-xl font-black text-[#1A73E8] dark:text-[#4874cf] font-['Manrope']">Editorial Intelligence</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="hidden md:flex gap-6 mr-8">
-            <a className="text-[#1A73E8] font-bold font-['Manrope']" href="#">Dashboard</a>
-            <a className="text-[#414754] dark:text-[#c1c6d6] font-['Manrope'] hover:bg-[#e7e8e9] transition-colors px-2 py-1 rounded" href="#">Modules</a>
-            <a className="text-[#414754] dark:text-[#c1c6d6] font-['Manrope'] hover:bg-[#e7e8e9] transition-colors px-2 py-1 rounded" href="#">Schedule</a>
-          </div>
-          <div className="w-10 h-10 rounded-full overflow-hidden bg-surface-container-highest border-2 border-primary/10">
-            <img alt="User Profile" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCSdcsM-xvec_lxXCfbtXEo8_gkYEVjtvP_3eo1QrkatvQQ-0IMBcVSxs5-LYbSMCY_i--fe70b1IZOabGozIPKAeYR8QT6Fr6Rb_zW0-6Q7LbgjISS7FbNJOF7YoxycO59OQdDTNicjlGpAaV31eMd59xBOiDFChTOffw9L71XJxLJfifuDIG-28YZB_Y_W0WUv4JQCWwvL9XWShxqe1r-cxIzgBYnmGrLMYVwJ00DWpr7e0UlhmvPH98zQTnNbN1Uk0Qj6YwmGovG" />
-          </div>
-        </div>
-      </header>
-
+    <PageLayout>
       <main className="max-w-7xl mx-auto px-6 pt-8 pb-32">
         {/* Hero Section: Student Identity */}
         <section className="mb-10 flex flex-col md:flex-row gap-8 items-end">
@@ -198,31 +182,6 @@ export default function StudentDashboardPage() {
           </div>
         </section>
       </main>
-
-      {/* BottomNavBar (Mobile Only) */}
-      <nav className="md:hidden fixed bottom-0 w-full z-50 rounded-t-2xl bg-[#ffffff] dark:bg-[#1f2122] shadow-[0_-4px_32px_rgba(25,28,29,0.04)] flex justify-around items-center h-20 px-4">
-        <div className="flex flex-col items-center justify-center bg-[#cfe6f2] dark:bg-[#2b5ab5]/20 text-[#2b5ab5] dark:text-[#4874cf] rounded-xl px-4 py-1 transition-all duration-200 ease-out">
-          <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>grid_view</span>
-          <span className="font-['Inter'] font-medium text-[10px] uppercase tracking-widest mt-1">Dashboard</span>
-        </div>
-        <div className="flex flex-col items-center justify-center text-[#414754] dark:text-[#c1c6d6] px-4 py-1 transition-all duration-200 ease-out hover:bg-[#f3f4f5]">
-          <span className="material-symbols-outlined">extension</span>
-          <span className="font-['Inter'] font-medium text-[10px] uppercase tracking-widest mt-1">Modules</span>
-        </div>
-        <div className="flex flex-col items-center justify-center text-[#414754] dark:text-[#c1c6d6] px-4 py-1 transition-all duration-200 ease-out hover:bg-[#f3f4f5]">
-          <span className="material-symbols-outlined">calendar_month</span>
-          <span className="font-['Inter'] font-medium text-[10px] uppercase tracking-widest mt-1">Schedule</span>
-        </div>
-        <div className="flex flex-col items-center justify-center text-[#414754] dark:text-[#c1c6d6] px-4 py-1 transition-all duration-200 ease-out hover:bg-[#f3f4f5]">
-          <span className="material-symbols-outlined">notifications_active</span>
-          <span className="font-['Inter'] font-medium text-[10px] uppercase tracking-widest mt-1">Alerts</span>
-        </div>
-      </nav>
-
-      {/* FAB */}
-      <button className="fixed right-6 bottom-24 md:bottom-8 w-14 h-14 bg-gradient-to-br from-primary to-primary-container text-white rounded-full shadow-lg flex items-center justify-center transition-transform active:scale-90 z-40">
-        <span className="material-symbols-outlined">add</span>
-      </button>
-    </div>
+    </PageLayout>
   );
 }

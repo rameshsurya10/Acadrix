@@ -1,21 +1,8 @@
+import PageLayout from '@/components/layout/PageLayout'
+
 export default function FacultyProfilePage() {
   return (
-    <div className="bg-surface font-body text-on-surface antialiased">
-      {/* TopAppBar */}
-      <header className="w-full top-0 sticky z-50 bg-[#f8f9fa] dark:bg-slate-900 flex items-center justify-between px-6 py-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full overflow-hidden bg-surface-container-high">
-            <img alt="User Profile" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDd1iMP6YfawIJFOcEXPxaG9BcYSlihQr4Ei4csZJZRt4ITWcivCOrPZVwqVVdijvJFJfAF80S9oC0FgrtsIrtzQ1tDHrg7IODPLUEqiTkA1BiNvmgc2zWNXbvFUQkrqducDLFOBx9lUpGxVfwY89sDBU0FhCgk-0g5V6BUcTM7XMNBZeCAEyi3BQQ8qP9MX6OLAare2CcAu1EY0UEY-aUK3upK0D6s2O30wUnQ_3748UBKzyEZaPiTlyzwh8Yuv4_Qyl8OJ-Q1jPlv" />
-          </div>
-          <span className="text-[#2b5ab5] dark:text-[#4874cf] font-manrope font-extrabold tracking-tight text-xl">Scholar Metric</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <button className="p-2 rounded-full hover:bg-[#e7e8e9] dark:hover:bg-slate-700 transition-colors text-[#414754] dark:text-slate-400">
-            <span className="material-symbols-outlined">search</span>
-          </button>
-        </div>
-      </header>
-
+    <PageLayout>
       <main className="max-w-7xl mx-auto px-6 pt-8 pb-32">
         {/* Profile Hero Section */}
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
@@ -199,26 +186,6 @@ export default function FacultyProfilePage() {
           </div>
         </section>
       </main>
-
-      {/* BottomNavBar */}
-      <nav className="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pb-6 pt-3 bg-[#ffffff]/80 dark:bg-slate-900/80 backdrop-blur-xl border-t border-[#c1c6d6]/20 shadow-[0_-4px_32px_rgba(25,28,29,0.04)] z-50 md:hidden">
-        <div className="flex flex-col items-center justify-center text-[#414754] dark:text-slate-400 px-3 py-1 transition-all duration-300 ease-in-out hover:text-[#2b5ab5]">
-          <span className="material-symbols-outlined">grid_view</span>
-          <span className="font-inter text-[10px] font-medium uppercase tracking-wider mt-1">Dashboard</span>
-        </div>
-        <div className="flex flex-col items-center justify-center text-[#414754] dark:text-slate-400 px-3 py-1 transition-all duration-300 ease-in-out hover:text-[#2b5ab5]">
-          <span className="material-symbols-outlined">chat_bubble</span>
-          <span className="font-inter text-[10px] font-medium uppercase tracking-wider mt-1">Messages</span>
-        </div>
-        <div className="flex flex-col items-center justify-center text-[#414754] dark:text-slate-400 px-3 py-1 transition-all duration-300 ease-in-out hover:text-[#2b5ab5]">
-          <span className="material-symbols-outlined">group</span>
-          <span className="font-inter text-[10px] font-medium uppercase tracking-wider mt-1">Directory</span>
-        </div>
-        <div className="flex flex-col items-center justify-center bg-[#cfe6f2] dark:bg-[#2b5ab5]/20 text-[#2b5ab5] dark:text-[#4874cf] rounded-xl px-3 py-1 transition-all duration-300 ease-in-out">
-          <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>person</span>
-          <span className="font-inter text-[10px] font-medium uppercase tracking-wider mt-1">Profile</span>
-        </div>
-      </nav>
-    </div>
+    </PageLayout>
   );
 }

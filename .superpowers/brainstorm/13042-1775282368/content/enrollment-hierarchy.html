@@ -1,0 +1,126 @@
+<h2>Enrollment System — Permission & Flow Overview</h2>
+<p class="subtitle">Does this hierarchy and flow match what you described?</p>
+
+<div class="section">
+  <h3>Who Can Enroll Whom</h3>
+  <div class="mockup">
+    <div class="mockup-header">Role-Based Enrollment Permissions</div>
+    <div class="mockup-body" style="padding: 32px; background: #0f172a;">
+      <div style="max-width: 700px; margin: 0 auto;">
+
+        <!-- Super Admin -->
+        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px;">
+          <div style="width: 140px; padding: 12px; background: #7c3aed; border-radius: 10px; text-align: center;">
+            <div style="color: #f8fafc; font-weight: 700; font-size: 14px;">Super Admin</div>
+            <div style="color: #c4b5fd; font-size: 11px;">System Level</div>
+          </div>
+          <div style="color: #64748b; font-size: 20px;">→</div>
+          <div style="display: flex; gap: 8px;">
+            <div style="padding: 8px 16px; background: #1e293b; border: 1px solid #334155; border-radius: 8px; color: #f8fafc; font-size: 13px;">Admin</div>
+            <div style="padding: 8px 16px; background: #1e293b; border: 1px solid #334155; border-radius: 8px; color: #f8fafc; font-size: 13px;">Principal</div>
+          </div>
+        </div>
+
+        <!-- Admin & Principal -->
+        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px;">
+          <div style="width: 140px; padding: 12px; background: #2563eb; border-radius: 10px; text-align: center;">
+            <div style="color: #f8fafc; font-weight: 700; font-size: 14px;">Admin / Principal</div>
+            <div style="color: #93c5fd; font-size: 11px;">School-wide</div>
+          </div>
+          <div style="color: #64748b; font-size: 20px;">→</div>
+          <div style="display: flex; gap: 8px;">
+            <div style="padding: 8px 16px; background: #1e293b; border: 1px solid #334155; border-radius: 8px; color: #f8fafc; font-size: 13px;">Teacher</div>
+            <div style="padding: 8px 16px; background: #1e293b; border: 1px solid #334155; border-radius: 8px; color: #f8fafc; font-size: 13px;">Student</div>
+          </div>
+          <div style="color: #64748b; font-size: 11px; max-width: 150px;">Any section, any grade</div>
+        </div>
+
+        <!-- Teacher -->
+        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px;">
+          <div style="width: 140px; padding: 12px; background: #059669; border-radius: 10px; text-align: center;">
+            <div style="color: #f8fafc; font-weight: 700; font-size: 14px;">Teacher</div>
+            <div style="color: #6ee7b7; font-size: 11px;">Class-scoped</div>
+          </div>
+          <div style="color: #64748b; font-size: 20px;">→</div>
+          <div style="display: flex; gap: 8px;">
+            <div style="padding: 8px 16px; background: #1e293b; border: 1px solid #334155; border-radius: 8px; color: #f8fafc; font-size: 13px;">Student</div>
+          </div>
+          <div style="color: #f97316; font-size: 11px; max-width: 180px; background: #431407; padding: 4px 8px; border-radius: 6px;">⚠ Only their assigned sections</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top: 32px;">
+  <h3>Enrollment Flow</h3>
+  <div class="mockup">
+    <div class="mockup-header">How Enrollment Works</div>
+    <div class="mockup-body" style="padding: 32px; background: #0f172a;">
+      <div style="max-width: 700px; margin: 0 auto; color: #f8fafc;">
+
+        <div style="display: flex; gap: 16px; margin-bottom: 20px;">
+          <div style="width: 32px; height: 32px; background: #3b82f6; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0;">1</div>
+          <div>
+            <div style="font-weight: 600; margin-bottom: 4px;">Fill enrollment form</div>
+            <div style="color: #94a3b8; font-size: 13px;">Name, email (required), phone, DOB, guardian info (optional), section/grade</div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 16px; margin-bottom: 20px;">
+          <div style="width: 32px; height: 32px; background: #3b82f6; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0;">2</div>
+          <div>
+            <div style="font-weight: 600; margin-bottom: 4px;">System auto-generates ID</div>
+            <div style="color: #94a3b8; font-size: 13px;">Using IDConfiguration: MAJ1998-14 (auto-incremented)</div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 16px; margin-bottom: 20px;">
+          <div style="width: 32px; height: 32px; background: #3b82f6; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0;">3</div>
+          <div>
+            <div style="font-weight: 600; margin-bottom: 4px;">User account created (no password)</div>
+            <div style="color: #94a3b8; font-size: 13px;">User created with set_unusable_password() — password set on first login</div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 16px; margin-bottom: 20px;">
+          <div style="width: 32px; height: 32px; background: #3b82f6; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0;">4</div>
+          <div>
+            <div style="font-weight: 600; margin-bottom: 4px;">Success screen shows ID</div>
+            <div style="color: #94a3b8; font-size: 13px;">Displays generated ID for printing/sharing + sends welcome email with ID</div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 16px;">
+          <div style="width: 32px; height: 32px; background: #059669; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0;">✓</div>
+          <div>
+            <div style="font-weight: 600; margin-bottom: 4px;">User logs in with ID → sets password</div>
+            <div style="color: #94a3b8; font-size: 13px;">Uses the progressive auth flow we already built</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top: 32px;">
+  <h3>Does this look right?</h3>
+  <div class="options">
+    <div class="option" data-choice="yes" onclick="toggleSelect(this)">
+      <div class="letter">A</div>
+      <div class="content">
+        <h3>Yes, this is correct</h3>
+        <p>Hierarchy, flow, and permissions all match my vision</p>
+      </div>
+    </div>
+    <div class="option" data-choice="changes" onclick="toggleSelect(this)">
+      <div class="letter">B</div>
+      <div class="content">
+        <h3>Needs changes</h3>
+        <p>I'll explain what needs to change</p>
+      </div>
+    </div>
+  </div>
+</div>

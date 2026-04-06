@@ -1,32 +1,8 @@
+import PageLayout from '@/components/layout/PageLayout'
+
 export default function GradebookPage() {
   return (
-    <div className="bg-background text-on-background min-h-screen pb-24">
-      {/* TopAppBar */}
-      <header className="fixed top-0 z-50 flex justify-between items-center w-full px-8 py-4 bg-[#f8f9fa] dark:bg-slate-950 transition-colors">
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center overflow-hidden">
-            <img
-              alt="User Profile"
-              className="w-full h-full object-cover"
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuCzfBOjsY1cRr-sANZe9SKokM7Y2l-ka5nx3Ia6XcOWHIWfIyCPBAdFWryo-AyPb189hgGlX-KmEmxGRB1gFQZO5Um0n2s032Ant8AZjL7v_go7BEkE-eF383zprz0gid9f7UFLhMo7mAybzI2f9ZcYWweD_UCAFmvuszBJU859vc2wOz8l214IVo6yl1tn_sBw5Nx94zHmXy0axl49N9U7chGFEB2obda4NBixZ-1k7tU7PPPU6F_rguyDvqD0_sEE2KojhfhIFgch"
-            />
-          </div>
-          <span className="text-2xl font-bold tracking-tight text-[#191c1d] dark:text-slate-100 font-headline">Scholar Metric</span>
-        </div>
-        <div className="flex items-center gap-6">
-          <div className="hidden md:flex gap-8 items-center text-[#414754] dark:text-slate-400 font-medium text-sm">
-            <span className="text-[#2b5ab5] font-bold">Gradebook</span>
-            <span className="hover:text-[#2b5ab5] transition-colors cursor-pointer">Admissions</span>
-            <span className="hover:text-[#2b5ab5] transition-colors cursor-pointer">Faculty</span>
-            <span className="hover:text-[#2b5ab5] transition-colors cursor-pointer">Students</span>
-          </div>
-          <button className="p-2 rounded-full hover:bg-[#e7e8e9] transition-colors active:scale-95 duration-150">
-            <span className="material-symbols-outlined text-[#2b5ab5]">search</span>
-          </button>
-        </div>
-      </header>
-
-      {/* Main Content Canvas */}
+    <PageLayout>
       <main className="pt-24 px-4 md:px-8 max-w-7xl mx-auto">
         {/* Editorial Header Section */}
         <section className="mb-10 mt-6 flex flex-col md:flex-row md:items-end justify-between gap-6">
@@ -227,31 +203,6 @@ export default function GradebookPage() {
           </div>
         </section>
       </main>
-
-      {/* Floating Action Button */}
-      <button className="fixed bottom-28 right-8 md:right-12 w-16 h-16 rounded-full bg-gradient-to-br from-primary to-primary-container text-on-primary shadow-xl flex items-center justify-center active:scale-95 transition-transform z-40">
-        <span className="material-symbols-outlined text-3xl">add</span>
-      </button>
-
-      {/* BottomNavBar */}
-      <nav className="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-2 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl md:hidden">
-        <div className="flex flex-col items-center justify-center text-[#2b5ab5] dark:text-[#4874cf] scale-110">
-          <span className="material-symbols-outlined">grid_view</span>
-          <span className="font-inter text-[10px] font-medium">Grades</span>
-        </div>
-        <div className="flex flex-col items-center justify-center text-[#414754] dark:text-slate-500 hover:opacity-80 active:scale-90 transition-transform">
-          <span className="material-symbols-outlined">cloud_upload</span>
-          <span className="font-inter text-[10px] font-medium">Entry</span>
-        </div>
-        <div className="flex flex-col items-center justify-center text-[#414754] dark:text-slate-500 hover:opacity-80 active:scale-90 transition-transform">
-          <span className="material-symbols-outlined">payments</span>
-          <span className="font-inter text-[10px] font-medium">Staff</span>
-        </div>
-        <div className="flex flex-col items-center justify-center text-[#414754] dark:text-slate-500 hover:opacity-80 active:scale-90 transition-transform">
-          <span className="material-symbols-outlined">folder_shared</span>
-          <span className="font-inter text-[10px] font-medium">Directory</span>
-        </div>
-      </nav>
-    </div>
+    </PageLayout>
   );
 }

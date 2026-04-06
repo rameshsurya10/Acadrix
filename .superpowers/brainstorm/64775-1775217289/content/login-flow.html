@@ -1,0 +1,128 @@
+<h2>Login Flow — Progressive Disclosure</h2>
+<p class="subtitle">Does this flow match what you described? Click the one that fits best.</p>
+
+<div class="section">
+  <h3>Step 1: User enters ID or Email</h3>
+  <div class="mockup">
+    <div class="mockup-header">Login — Step 1 (all users see this)</div>
+    <div class="mockup-body" style="padding: 40px; text-align: center; background: #0f172a;">
+      <div style="max-width: 400px; margin: 0 auto;">
+        <div style="font-size: 28px; font-weight: 700; color: #f8fafc; margin-bottom: 8px;">Acadrix</div>
+        <p style="color: #94a3b8; margin-bottom: 32px;">Sign in to your account</p>
+
+        <div style="background: #1e293b; border-radius: 12px; padding: 32px;">
+          <input class="mock-input" placeholder="Enter your ID or Email" style="width: 100%; padding: 14px; font-size: 16px; margin-bottom: 16px; background: #0f172a; border: 1px solid #334155; color: #f8fafc; border-radius: 8px;">
+          <button class="mock-button" style="width: 100%; padding: 14px; font-size: 16px; background: #3b82f6; color: white; border: none; border-radius: 8px; cursor: pointer;">Continue</button>
+
+          <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #334155;">
+            <button class="mock-button" style="width: 100%; padding: 12px; font-size: 14px; background: transparent; color: #94a3b8; border: 1px solid #334155; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+              <span style="font-size: 18px;">G</span> Sign in with Google
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top: 32px;">
+  <h3>Step 2: System detects what was entered and shows the right field</h3>
+
+  <div class="split" style="gap: 24px;">
+    <div class="mockup" style="flex: 1;">
+      <div class="mockup-header" style="background: #059669;">Path A: ID Entered (has password)</div>
+      <div class="mockup-body" style="padding: 32px; text-align: center; background: #0f172a;">
+        <div style="max-width: 360px; margin: 0 auto;">
+          <div style="background: #1e293b; border-radius: 12px; padding: 24px;">
+            <div style="color: #94a3b8; font-size: 13px; margin-bottom: 4px;">Logged in as</div>
+            <div style="color: #f8fafc; font-size: 16px; font-weight: 600; margin-bottom: 20px;">TCH-2026-001</div>
+            <input class="mock-input" placeholder="Enter your password" type="password" style="width: 100%; padding: 14px; font-size: 16px; margin-bottom: 16px; background: #0f172a; border: 1px solid #334155; color: #f8fafc; border-radius: 8px;">
+            <button class="mock-button" style="width: 100%; padding: 14px; background: #3b82f6; color: white; border: none; border-radius: 8px;">Sign In</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mockup" style="flex: 1;">
+      <div class="mockup-header" style="background: #d97706;">Path B: ID Entered (first time — no password)</div>
+      <div class="mockup-body" style="padding: 32px; text-align: center; background: #0f172a;">
+        <div style="max-width: 360px; margin: 0 auto;">
+          <div style="background: #1e293b; border-radius: 12px; padding: 24px;">
+            <div style="color: #94a3b8; font-size: 13px; margin-bottom: 4px;">Welcome! Set up your account</div>
+            <div style="color: #f8fafc; font-size: 16px; font-weight: 600; margin-bottom: 20px;">STU-2026-042</div>
+            <input class="mock-input" placeholder="Create a password" type="password" style="width: 100%; padding: 14px; font-size: 16px; margin-bottom: 12px; background: #0f172a; border: 1px solid #334155; color: #f8fafc; border-radius: 8px;">
+            <input class="mock-input" placeholder="Confirm password" type="password" style="width: 100%; padding: 14px; font-size: 16px; margin-bottom: 16px; background: #0f172a; border: 1px solid #334155; color: #f8fafc; border-radius: 8px;">
+            <button class="mock-button" style="width: 100%; padding: 14px; background: #059669; color: white; border: none; border-radius: 8px;">Create Account & Sign In</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="split" style="gap: 24px; margin-top: 24px;">
+    <div class="mockup" style="flex: 1;">
+      <div class="mockup-header" style="background: #7c3aed;">Path C: Email Entered (registered)</div>
+      <div class="mockup-body" style="padding: 32px; text-align: center; background: #0f172a;">
+        <div style="max-width: 360px; margin: 0 auto;">
+          <div style="background: #1e293b; border-radius: 12px; padding: 24px;">
+            <div style="color: #94a3b8; font-size: 13px; margin-bottom: 4px;">OTP sent to</div>
+            <div style="color: #f8fafc; font-size: 16px; font-weight: 600; margin-bottom: 20px;">r*****@gmail.com</div>
+            <div style="display: flex; gap: 8px; justify-content: center; margin-bottom: 16px;">
+              <input style="width: 48px; height: 56px; text-align: center; font-size: 24px; background: #0f172a; border: 1px solid #334155; color: #f8fafc; border-radius: 8px;" value="4">
+              <input style="width: 48px; height: 56px; text-align: center; font-size: 24px; background: #0f172a; border: 1px solid #334155; color: #f8fafc; border-radius: 8px;" value="7">
+              <input style="width: 48px; height: 56px; text-align: center; font-size: 24px; background: #0f172a; border: 1px solid #334155; color: #f8fafc; border-radius: 8px;" value="2">
+              <input style="width: 48px; height: 56px; text-align: center; font-size: 24px; background: #0f172a; border: 1px solid #334155; color: #f8fafc; border-radius: 8px;" value="">
+              <input style="width: 48px; height: 56px; text-align: center; font-size: 24px; background: #0f172a; border: 1px solid #334155; color: #f8fafc; border-radius: 8px;" value="">
+              <input style="width: 48px; height: 56px; text-align: center; font-size: 24px; background: #0f172a; border: 1px solid #334155; color: #f8fafc; border-radius: 8px;" value="">
+            </div>
+            <button class="mock-button" style="width: 100%; padding: 14px; background: #7c3aed; color: white; border: none; border-radius: 8px;">Verify & Sign In</button>
+            <p style="color: #64748b; font-size: 13px; margin-top: 12px;">Resend OTP in 30s</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mockup" style="flex: 1;">
+      <div class="mockup-header" style="background: #dc2626;">Path D: Email NOT registered</div>
+      <div class="mockup-body" style="padding: 32px; text-align: center; background: #0f172a;">
+        <div style="max-width: 360px; margin: 0 auto;">
+          <div style="background: #1e293b; border-radius: 12px; padding: 24px;">
+            <div style="background: #7f1d1d; border: 1px solid #dc2626; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+              <div style="color: #fca5a5; font-size: 14px; font-weight: 600; margin-bottom: 4px;">Email not found</div>
+              <div style="color: #fca5a5; font-size: 13px;">This email is not registered with any student or teacher account. Please use your Student ID or Employee ID to log in.</div>
+            </div>
+            <input class="mock-input" placeholder="Enter your ID or Email" style="width: 100%; padding: 14px; font-size: 16px; margin-bottom: 16px; background: #0f172a; border: 1px solid #334155; color: #f8fafc; border-radius: 8px;">
+            <button class="mock-button" style="width: 100%; padding: 14px; background: #3b82f6; color: white; border: none; border-radius: 8px;">Continue</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top: 32px;">
+  <h3>Does this flow match your vision?</h3>
+  <div class="options">
+    <div class="option" data-choice="yes-perfect" onclick="toggleSelect(this)">
+      <div class="letter">A</div>
+      <div class="content">
+        <h3>Yes, this is exactly right</h3>
+        <p>All 4 paths (ID+password, ID+set password, Email+OTP, Email not found) look correct</p>
+      </div>
+    </div>
+    <div class="option" data-choice="mostly-right" onclick="toggleSelect(this)">
+      <div class="letter">B</div>
+      <div class="content">
+        <h3>Mostly right, but needs changes</h3>
+        <p>I'll explain what needs to change in the terminal</p>
+      </div>
+    </div>
+    <div class="option" data-choice="different-idea" onclick="toggleSelect(this)">
+      <div class="letter">C</div>
+      <div class="content">
+        <h3>I had something different in mind</h3>
+        <p>Let me explain my vision differently</p>
+      </div>
+    </div>
+  </div>
+</div>

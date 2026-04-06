@@ -1,27 +1,8 @@
+import PageLayout from '@/components/layout/PageLayout'
+
 export default function ParentPaymentsPage() {
   return (
-    <div className="bg-surface text-on-surface min-h-screen pb-24 md:pb-0">
-      {/* TopAppBar */}
-      <header className="bg-[#f8f9fa] dark:bg-[#191c1d] top-0 sticky z-50">
-        <div className="flex justify-between items-center w-full px-6 py-3">
-          <div className="flex items-center gap-3">
-            <span className="material-symbols-outlined text-[#1A73E8] dark:text-[#4874cf]">school</span>
-            <span className="text-xl font-black text-[#1A73E8] dark:text-[#4874cf] font-['Manrope']">Editorial Intelligence</span>
-          </div>
-          <div className="hidden md:flex items-center space-x-8">
-            <a className="text-[#414754] dark:text-[#c1c6d6] font-medium hover:text-[#1A73E8] transition-colors" href="#">Dashboard</a>
-            <a className="text-[#414754] dark:text-[#c1c6d6] font-medium hover:text-[#1A73E8] transition-colors" href="#">Modules</a>
-            <a className="text-[#414754] dark:text-[#c1c6d6] font-medium hover:text-[#1A73E8] transition-colors" href="#">Schedule</a>
-            <a className="text-[#1A73E8] font-bold" href="#">Billing</a>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-primary-container">
-              <img alt="User profile" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDa70A3eFWDdJJncztEnGquQdpC3E212E8vSz8RUnslDZovnDpieDc2ydAtQsuu-J8YnSfl4x36eFQANhhIZiyB_B1HsqkOo9LTVbCsxrugAgDt3lrY1OjVi-QCRob6NCYTr8n1Tf6z4YGyBS-hJS8zGy-zJiIw4p3sVvlQjeLprayxngb1HwY-KGwMLmUrblPqx7p0pSUviq5i9GUC0zxEx8nuVSB5nmrY0Z5tfHXuRMwhA55MUa5arij7xdJPA3j-9JdIhfsL6eHL" />
-            </div>
-          </div>
-        </div>
-      </header>
-
+    <PageLayout>
       <main className="max-w-7xl mx-auto px-6 py-10">
         {/* Editorial Header */}
         <div className="mb-12">
@@ -236,28 +217,6 @@ export default function ParentPaymentsPage() {
           </div>
         </div>
       </main>
-
-      {/* BottomNavBar (Mobile Only) */}
-      <nav className="md:hidden fixed bottom-0 w-full z-50 rounded-t-2xl bg-[#ffffff] dark:bg-[#1f2122] shadow-[0_-4px_32px_rgba(25,28,29,0.04)]">
-        <div className="flex justify-around items-center w-full h-20 px-4">
-          <div className="flex flex-col items-center justify-center text-[#414754] dark:text-[#c1c6d6] px-4 py-1">
-            <span className="material-symbols-outlined">grid_view</span>
-            <span className="font-['Inter'] font-medium text-[10px] uppercase tracking-widest mt-1">Dashboard</span>
-          </div>
-          <div className="flex flex-col items-center justify-center text-[#414754] dark:text-[#c1c6d6] px-4 py-1">
-            <span className="material-symbols-outlined">extension</span>
-            <span className="font-['Inter'] font-medium text-[10px] uppercase tracking-widest mt-1">Modules</span>
-          </div>
-          <div className="flex flex-col items-center justify-center text-[#414754] dark:text-[#c1c6d6] px-4 py-1">
-            <span className="material-symbols-outlined">calendar_month</span>
-            <span className="font-['Inter'] font-medium text-[10px] uppercase tracking-widest mt-1">Schedule</span>
-          </div>
-          <div className="flex flex-col items-center justify-center bg-[#cfe6f2] dark:bg-[#2b5ab5]/20 text-[#2b5ab5] dark:text-[#4874cf] rounded-xl px-4 py-1">
-            <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>payments</span>
-            <span className="font-['Inter'] font-medium text-[10px] uppercase tracking-widest mt-1">Billing</span>
-          </div>
-        </div>
-      </nav>
-    </div>
+    </PageLayout>
   );
 }

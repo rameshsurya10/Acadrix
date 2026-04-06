@@ -1,26 +1,8 @@
+import PageLayout from '@/components/layout/PageLayout'
+
 export default function MessagingPage() {
   return (
-    <div className="bg-background text-on-surface min-h-screen">
-      {/* TopAppBar */}
-      <header className="w-full top-0 sticky z-40 bg-[#f8f9fa] dark:bg-slate-900 flex items-center justify-between px-6 py-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-primary-container overflow-hidden">
-            <img alt="User Profile" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBExm5HisI4cwzDQ3nwGCmpzgxfe7hhYtBuwri3A8SySJCdrZGlYW6d_svEIELoNc7Lc4cyG5oIHHoxwczeR5JNKPa2nkLwjwQnsNlCqFhXhRFkeCjvgzLzS4iHGlnoptvV447qVMv6apHgXS-UIRWiVvpkoAtn8l2k0O_4EUrPa8ydFDSGuMxiqSOrIXvAiAANLYzdW5GNQL73l_oqUk8JBjk7RT9sLScllUFNNZh5nRtqxtPWes2AFJcznnGmtIMoi52vHNJfmt4L" />
-          </div>
-          <h1 className="text-[#2b5ab5] dark:text-[#4874cf] font-manrope font-extrabold tracking-tight text-2xl">Scholar Metric</h1>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="hidden md:flex items-center gap-6 mr-6">
-            <span className="text-[#414754] dark:text-slate-400 font-medium hover:text-[#2b5ab5] transition-colors cursor-pointer">Dashboard</span>
-            <span className="text-[#2b5ab5] dark:text-[#4874cf] font-bold cursor-pointer">Messages</span>
-            <span className="text-[#414754] dark:text-slate-400 font-medium hover:text-[#2b5ab5] transition-colors cursor-pointer">Directory</span>
-          </div>
-          <button className="p-2 rounded-full hover:bg-[#e7e8e9] dark:hover:bg-slate-700 transition-colors">
-            <span className="material-symbols-outlined text-[#2b5ab5]">search</span>
-          </button>
-        </div>
-      </header>
-
+    <PageLayout>
       <main className="max-w-7xl mx-auto px-6 py-8 pb-32">
         {/* Header */}
         <div className="mb-10">
@@ -181,31 +163,6 @@ export default function MessagingPage() {
           </section>
         </div>
       </main>
-
-      {/* FAB for New Message */}
-      <button className="fixed right-6 bottom-24 md:bottom-10 z-50 w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-primary-container text-on-primary shadow-xl flex items-center justify-center transition-transform hover:scale-110 active:scale-95">
-        <span className="material-symbols-outlined text-3xl">edit_square</span>
-      </button>
-
-      {/* BottomNavBar */}
-      <nav className="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pb-6 pt-3 bg-[#ffffff]/80 dark:bg-slate-900/80 backdrop-blur-xl z-50 rounded-t-2xl shadow-[0_-4px_32px_rgba(25,28,29,0.04)] border-t border-[#c1c6d6]/20 md:hidden">
-        <div className="flex flex-col items-center justify-center text-[#414754] dark:text-slate-400 px-3 py-1 transition-all duration-300 ease-in-out hover:text-[#2b5ab5]">
-          <span className="material-symbols-outlined">grid_view</span>
-          <span className="font-inter text-[10px] font-medium uppercase tracking-wider mt-1">Dashboard</span>
-        </div>
-        <div className="flex flex-col items-center justify-center bg-[#cfe6f2] dark:bg-[#2b5ab5]/20 text-[#2b5ab5] dark:text-[#4874cf] rounded-xl px-3 py-1 transition-all duration-300 ease-in-out">
-          <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>chat_bubble</span>
-          <span className="font-inter text-[10px] font-medium uppercase tracking-wider mt-1">Messages</span>
-        </div>
-        <div className="flex flex-col items-center justify-center text-[#414754] dark:text-slate-400 px-3 py-1 transition-all duration-300 ease-in-out hover:text-[#2b5ab5]">
-          <span className="material-symbols-outlined">group</span>
-          <span className="font-inter text-[10px] font-medium uppercase tracking-wider mt-1">Directory</span>
-        </div>
-        <div className="flex flex-col items-center justify-center text-[#414754] dark:text-slate-400 px-3 py-1 transition-all duration-300 ease-in-out hover:text-[#2b5ab5]">
-          <span className="material-symbols-outlined">person</span>
-          <span className="font-inter text-[10px] font-medium uppercase tracking-wider mt-1">Profile</span>
-        </div>
-      </nav>
-    </div>
+    </PageLayout>
   );
 }
