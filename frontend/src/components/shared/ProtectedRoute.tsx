@@ -2,10 +2,23 @@ import { Navigate, Outlet } from 'react-router-dom'
 import { useAuth, UserRole } from '@/contexts/AuthContext'
 
 const ROLE_HOME: Record<UserRole, string> = {
+  super_admin: '/super-admin/dashboard',
   admin: '/admin/dashboard',
+  finance: '/finance/dashboard',
   principal: '/principal/dashboard',
   teacher: '/teacher/dashboard',
   student: '/student/dashboard',
+}
+
+// Role hierarchy: higher roles inherit access to lower roles
+// Finance is a separate branch, but principal can view admin finance (read-only)
+const ROLE_ALLOWS: Record<string, string[]> = {
+  super_admin: ['super_admin', 'admin', 'finance', 'principal', 'teacher', 'student'],
+  admin: ['admin', 'principal', 'teacher', 'student'],
+  finance: ['finance'],
+  principal: ['principal', 'admin', 'teacher', 'student'],
+  teacher: ['teacher', 'student'],
+  student: ['student'],
 }
 
 interface Props {
@@ -36,7 +49,8 @@ export default function ProtectedRoute({ role }: Props) {
   if (!user) return <Navigate to="/login" replace />
 
   if (role !== 'any') {
-    if (user.role !== role) {
+    const allowed = ROLE_ALLOWS[user.role] || [user.role]
+    if (!allowed.includes(role)) {
       return <Navigate to={ROLE_HOME[user.role]} replace />
     }
   }

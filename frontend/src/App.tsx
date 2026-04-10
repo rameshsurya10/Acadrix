@@ -3,10 +3,12 @@ import { AuthProvider, useAuth, UserRole } from '@/contexts/AuthContext'
 import ProtectedRoute from '@/components/shared/ProtectedRoute'
 
 const ROLE_HOME: Record<UserRole, string> = {
-  admin:     '/admin/dashboard',
-  principal: '/principal/dashboard',
-  teacher:   '/teacher/dashboard',
-  student:   '/student/dashboard',
+  super_admin: '/super-admin/dashboard',
+  admin:       '/admin/dashboard',
+  finance:     '/finance/dashboard',
+  principal:   '/principal/dashboard',
+  teacher:     '/teacher/dashboard',
+  student:     '/student/dashboard',
 }
 
 function RootRedirect() {
@@ -41,6 +43,15 @@ import PrivacyPolicyPage from '@/pages/public/PrivacyPolicyPage'
 import TermsOfServicePage from '@/pages/public/TermsOfServicePage'
 import HelpCenterPage from '@/pages/public/HelpCenterPage'
 
+// Super Admin
+import SuperAdminDashboard from '@/pages/superAdmin/DashboardPage'
+import SuperAdminAdmins from '@/pages/superAdmin/AdminsPage'
+import SuperAdminPrincipals from '@/pages/superAdmin/PrincipalsPage'
+import SuperAdminUsers from '@/pages/superAdmin/UsersPage'
+import SuperAdminSettings from '@/pages/superAdmin/SettingsPage'
+import SuperAdminAnnouncements from '@/pages/superAdmin/AnnouncementsPage'
+import SuperAdminAuditLogs from '@/pages/superAdmin/AuditLogsPage'
+
 // Admin
 import AdminDashboard from '@/pages/admin/DashboardPage'
 import AdminAdmissions from '@/pages/admin/AdmissionsPage'
@@ -48,6 +59,17 @@ import AdminAssessments from '@/pages/admin/AssessmentsPage'
 import AdminFinance from '@/pages/admin/FinancePage'
 import AdminStudents from '@/pages/admin/StudentsPage'
 import AdminProfile from '@/pages/admin/ProfilePage'
+import AdminAcademicYears from '@/pages/admin/AcademicYearsPage'
+import AdminClasses from '@/pages/admin/ClassesPage'
+import AdminSubjects from '@/pages/admin/SubjectsPage'
+import AdminCourses from '@/pages/admin/CoursesPage'
+import AdminProfileEdit from '@/pages/admin/ProfileEditPage'
+import AdminFeeTemplates from '@/pages/admin/FeeTemplatesPage'
+
+// Finance
+import FinanceDashboard from '@/pages/finance/DashboardPage'
+import FinanceDefaulters from '@/pages/finance/DefaultersPage'
+import FinanceReceipt from '@/pages/finance/ReceiptPage'
 
 // Principal
 import PrincipalDashboard from '@/pages/principal/DashboardPage'
@@ -57,6 +79,7 @@ import QuestionGenerator from '@/pages/principal/QuestionGeneratorPage'
 import TeacherDashboard from '@/pages/teacher/DashboardPage'
 import Gradebook from '@/pages/teacher/GradebookPage'
 import TestCreation from '@/pages/teacher/TestCreationPage'
+import TeacherAttendance from '@/pages/teacher/AttendancePage'
 
 // Student
 import StudentDashboard from '@/pages/student/DashboardPage'
@@ -67,14 +90,43 @@ import Tuition from '@/pages/student/TuitionPage'
 // Payments
 import PaymentsPage from '@/pages/student/PaymentsPage'
 
+// UDISE
+import UDISEProfile from '@/pages/admin/UDISEProfilePage'
+import UDISEData from '@/pages/admin/UDISEDataPage'
+
+// Payment Gateway (Super Admin)
+import PaymentGateway from '@/pages/superAdmin/PaymentGatewayPage'
+
+// Pay Fees (Student)
+import PayFees from '@/pages/student/PayFeesPage'
+
+// Report Cards & Certificates
+import AdminReportCardTemplates from '@/pages/admin/ReportCardTemplatesPage'
+import AdminGenerateReportCards from '@/pages/admin/GenerateReportCardsPage'
+import AdminCertificateTemplates from '@/pages/admin/CertificateTemplatesPage'
+import AdminIssueCertificate from '@/pages/admin/IssueCertificatePage'
+import StudentReportCards from '@/pages/student/ReportCardsPage'
+
 // Enrollment
 import AdminEnrollment from '@/pages/admin/EnrollmentPage'
 import TeacherEnrollment from '@/pages/teacher/EnrollmentPage'
+
+// Leave Management
+import ApplyLeave from '@/pages/leave/ApplyLeavePage'
+import MyLeaves from '@/pages/leave/MyLeavesPage'
+import LeaveApprovals from '@/pages/admin/LeaveApprovalsPage'
+import LeaveConfig from '@/pages/admin/LeaveConfigPage'
+
+// HR / Payroll
+import Payroll from '@/pages/finance/PayrollPage'
+import SalaryStructures from '@/pages/finance/SalaryStructuresPage'
+import TeacherPayslips from '@/pages/teacher/PayslipsPage'
 
 // Shared
 import MessagingCenter from '@/pages/shared/MessagingPage'
 import FacultyDirectory from '@/pages/shared/FacultyDirectoryPage'
 import FacultyProfile from '@/pages/shared/FacultyProfilePage'
+import Timetable from '@/pages/shared/TimetablePage'
 
 export default function App() {
   return (
@@ -89,6 +141,18 @@ export default function App() {
           <Route path="/help" element={<HelpCenterPage />} />
           <Route path="/" element={<RootRedirect />} />
 
+          {/* Super Admin */}
+          <Route path="/super-admin" element={<ProtectedRoute role="super_admin" />}>
+            <Route path="dashboard" element={<SuperAdminDashboard />} />
+            <Route path="admins" element={<SuperAdminAdmins />} />
+            <Route path="principals" element={<SuperAdminPrincipals />} />
+            <Route path="users" element={<SuperAdminUsers />} />
+            <Route path="settings" element={<SuperAdminSettings />} />
+            <Route path="announcements" element={<SuperAdminAnnouncements />} />
+            <Route path="audit-logs" element={<SuperAdminAuditLogs />} />
+            <Route path="payment-gateway" element={<PaymentGateway />} />
+          </Route>
+
           {/* Admin */}
           <Route path="/admin" element={<ProtectedRoute role="admin" />}>
             <Route path="dashboard" element={<AdminDashboard />} />
@@ -97,7 +161,32 @@ export default function App() {
             <Route path="finance" element={<AdminFinance />} />
             <Route path="students" element={<AdminStudents />} />
             <Route path="profile" element={<AdminProfile />} />
+            <Route path="profile/edit" element={<AdminProfileEdit />} />
             <Route path="enrollment" element={<AdminEnrollment />} />
+            <Route path="academic-years" element={<AdminAcademicYears />} />
+            <Route path="classes" element={<AdminClasses />} />
+            <Route path="subjects" element={<AdminSubjects />} />
+            <Route path="courses" element={<AdminCourses />} />
+            <Route path="report-card-templates" element={<AdminReportCardTemplates />} />
+            <Route path="generate-report-cards" element={<AdminGenerateReportCards />} />
+            <Route path="certificate-templates" element={<AdminCertificateTemplates />} />
+            <Route path="issue-certificate" element={<AdminIssueCertificate />} />
+            <Route path="udise-profile" element={<UDISEProfile />} />
+            <Route path="udise-data" element={<UDISEData />} />
+            <Route path="leave-approvals" element={<LeaveApprovals />} />
+            <Route path="leave-config" element={<LeaveConfig />} />
+          </Route>
+
+          {/* Finance */}
+          <Route path="/finance" element={<ProtectedRoute role="finance" />}>
+            <Route path="dashboard" element={<FinanceDashboard />} />
+            <Route path="fee-templates" element={<AdminFeeTemplates />} />
+            <Route path="payments" element={<AdminFinance />} />
+            <Route path="discounts" element={<AdminFeeTemplates />} />
+            <Route path="defaulters" element={<FinanceDefaulters />} />
+            <Route path="receipt/:paymentId" element={<FinanceReceipt />} />
+            <Route path="payroll" element={<Payroll />} />
+            <Route path="salary-structures" element={<SalaryStructures />} />
           </Route>
 
           {/* Principal */}
@@ -112,7 +201,9 @@ export default function App() {
             <Route path="dashboard" element={<TeacherDashboard />} />
             <Route path="gradebook" element={<Gradebook />} />
             <Route path="tests" element={<TestCreation />} />
+            <Route path="attendance" element={<TeacherAttendance />} />
             <Route path="enrollment" element={<TeacherEnrollment />} />
+            <Route path="payslips" element={<TeacherPayslips />} />
           </Route>
 
           {/* Student */}
@@ -122,6 +213,14 @@ export default function App() {
             <Route path="results" element={<TestResults />} />
             <Route path="tuition" element={<Tuition />} />
             <Route path="payments" element={<PaymentsPage />} />
+            <Route path="pay" element={<PayFees />} />
+            <Route path="report-cards" element={<StudentReportCards />} />
+          </Route>
+
+          {/* Leave (all authenticated roles) */}
+          <Route path="/leave" element={<ProtectedRoute role="any" />}>
+            <Route path="apply" element={<ApplyLeave />} />
+            <Route path="my-leaves" element={<MyLeaves />} />
           </Route>
 
           {/* Shared (all roles) */}
@@ -131,6 +230,9 @@ export default function App() {
           <Route path="/faculty" element={<ProtectedRoute role="any" />}>
             <Route index element={<FacultyDirectory />} />
             <Route path=":id" element={<FacultyProfile />} />
+          </Route>
+          <Route path="/timetable" element={<ProtectedRoute role="any" />}>
+            <Route index element={<Timetable />} />
           </Route>
         </Routes>
       </AuthProvider>

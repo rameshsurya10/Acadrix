@@ -4,9 +4,10 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
-from apps.accounts.permissions import IsAdmin
+from apps.accounts.permissions import IsSuperAdminOrAdmin as IsAdmin
 
 from .models import (
+    AcademicYear,
     Conversation,
     Course,
     Department,
@@ -17,6 +18,7 @@ from .models import (
     Subject,
 )
 from .serializers import (
+    AcademicYearSerializer,
     ConversationSerializer,
     CourseSerializer,
     DepartmentSerializer,
@@ -26,6 +28,22 @@ from .serializers import (
     SectionSerializer,
     SubjectSerializer,
 )
+
+
+class AcademicYearViewSet(ModelViewSet):
+    """Read for all; write for admins."""
+
+    serializer_class = AcademicYearSerializer
+    permission_classes = [IsAuthenticated]
+    ordering_fields = ['start_date', 'label']
+
+    def get_queryset(self):
+        return AcademicYear.objects.all()
+
+    def get_permissions(self):
+        if self.action in ('create', 'update', 'partial_update', 'destroy'):
+            return [IsAdmin()]
+        return super().get_permissions()
 
 
 class DepartmentViewSet(ModelViewSet):
@@ -45,8 +63,8 @@ class DepartmentViewSet(ModelViewSet):
         return super().get_permissions()
 
 
-class SubjectViewSet(ReadOnlyModelViewSet):
-    """List subjects (read-only)."""
+class SubjectViewSet(ModelViewSet):
+    """Read for all; write for admins."""
 
     serializer_class = SubjectSerializer
     permission_classes = [IsAuthenticated]
@@ -56,9 +74,14 @@ class SubjectViewSet(ReadOnlyModelViewSet):
     def get_queryset(self):
         return Subject.objects.select_related('department').all()
 
+    def get_permissions(self):
+        if self.action in ('create', 'update', 'partial_update', 'destroy'):
+            return [IsAdmin()]
+        return super().get_permissions()
 
-class GradeViewSet(ReadOnlyModelViewSet):
-    """List grades (read-only)."""
+
+class GradeViewSet(ModelViewSet):
+    """Read for all; write for admins."""
 
     serializer_class = GradeSerializer
     permission_classes = [IsAuthenticated]
@@ -66,9 +89,14 @@ class GradeViewSet(ReadOnlyModelViewSet):
     def get_queryset(self):
         return Grade.objects.all()
 
+    def get_permissions(self):
+        if self.action in ('create', 'update', 'partial_update', 'destroy'):
+            return [IsAdmin()]
+        return super().get_permissions()
 
-class SectionViewSet(ReadOnlyModelViewSet):
-    """List sections, filterable by grade."""
+
+class SectionViewSet(ModelViewSet):
+    """Read for all; write for admins."""
 
     serializer_class = SectionSerializer
     permission_classes = [IsAuthenticated]
@@ -78,9 +106,14 @@ class SectionViewSet(ReadOnlyModelViewSet):
     def get_queryset(self):
         return Section.objects.select_related('grade', 'academic_year').all()
 
+    def get_permissions(self):
+        if self.action in ('create', 'update', 'partial_update', 'destroy'):
+            return [IsAdmin()]
+        return super().get_permissions()
 
-class CourseViewSet(ReadOnlyModelViewSet):
-    """List courses, filterable by section/teacher/subject."""
+
+class CourseViewSet(ModelViewSet):
+    """Read for all; write for admins."""
 
     serializer_class = CourseSerializer
     permission_classes = [IsAuthenticated]
@@ -92,9 +125,14 @@ class CourseViewSet(ReadOnlyModelViewSet):
             'subject', 'section__grade', 'teacher', 'academic_year',
         ).all()
 
+    def get_permissions(self):
+        if self.action in ('create', 'update', 'partial_update', 'destroy'):
+            return [IsAdmin()]
+        return super().get_permissions()
 
-class ScheduleSlotViewSet(ReadOnlyModelViewSet):
-    """List schedule slots, filterable by course/day."""
+
+class ScheduleSlotViewSet(ModelViewSet):
+    """Read for all; write for admins."""
 
     serializer_class = ScheduleSlotSerializer
     permission_classes = [IsAuthenticated]
@@ -104,6 +142,11 @@ class ScheduleSlotViewSet(ReadOnlyModelViewSet):
         return ScheduleSlot.objects.select_related(
             'course__subject', 'course__section__grade',
         ).all()
+
+    def get_permissions(self):
+        if self.action in ('create', 'update', 'partial_update', 'destroy'):
+            return [IsAdmin()]
+        return super().get_permissions()
 
 
 class ConversationViewSet(ModelViewSet):
@@ -274,5 +317,36 @@ class FacultyProfileView(APIView):
             'performance_score': float(tp.performance_score) if tp.performance_score else None,
             'courses': course_data,
         }
+
+        return Response({'success': True, 'data': data})
+
+
+class UserSearchView(APIView):
+    """GET /api/v1/shared/users/search/?q=term — search users by name/email for messaging."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from apps.accounts.models import User
+        from django.db.models import Q
+
+        q = request.query_params.get('q', '').strip()
+        if len(q) < 2:
+            return Response({'success': True, 'data': []})
+
+        users = (
+            User.objects
+            .filter(
+                Q(first_name__icontains=q) | Q(last_name__icontains=q) | Q(email__icontains=q),
+                is_active=True,
+            )
+            .exclude(pk=request.user.pk)
+            .only('id', 'first_name', 'last_name', 'email', 'role')
+            .order_by('first_name')[:20]
+        )
+
+        data = [
+            {'id': u.id, 'name': u.get_full_name(), 'email': u.email, 'role': u.role}
+            for u in users
+        ]
 
         return Response({'success': True, 'data': data})

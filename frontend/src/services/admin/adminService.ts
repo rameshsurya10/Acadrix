@@ -102,7 +102,7 @@ export interface StudentProfile {
   address: string
   enrollment_date: string | null
   is_active: boolean
-  guardians: { id: number; parent_name: string; parent_email: string; relationship: string; is_primary: boolean }[]
+  guardians: { id: number; name: string; email: string; phone: string; relationship: string; is_primary: boolean }[]
   created_at: string
   updated_at: string
 }
@@ -153,6 +153,143 @@ export interface FinanceStats {
   overdue_count: number
   pending_count: number
   partial_count: number
+}
+
+// ── Academic Structure ────────────────────────────────────────────────
+
+export interface AcademicYear {
+  id: number
+  label: string
+  start_date: string
+  end_date: string
+  is_current: boolean
+  created_at: string
+}
+
+export interface Grade {
+  id: number
+  level: number
+  label: string
+  created_at: string
+}
+
+export interface Section {
+  id: number
+  grade: number
+  grade_label: string
+  name: string
+  display_name: string
+  capacity: number
+  academic_year: number
+  created_at: string
+}
+
+export interface Subject {
+  id: number
+  name: string
+  code: string
+  department: number
+  department_name: string
+  is_active: boolean
+  created_at: string
+}
+
+export interface Department {
+  id: number
+  name: string
+  code: string
+  description: string
+  is_active: boolean
+}
+
+export interface Course {
+  id: number
+  subject: number
+  subject_name: string
+  section: number
+  section_display: string
+  teacher: number | null
+  teacher_name: string | null
+  academic_year: number
+  location: string
+}
+
+// ── Finance: Fee Templates & Discounts ──────────────────────────────
+
+export interface FeeTemplate {
+  id: number
+  grade: number
+  grade_label: string
+  academic_year: number
+  academic_year_label: string
+  name: string
+  due_date: string | null
+  is_active: boolean
+  total_amount: string
+  items: FeeTemplateItem[]
+  created_at: string
+  updated_at: string
+}
+
+export interface FeeTemplateItem {
+  id?: number
+  description: string
+  amount: string
+  is_optional: boolean
+  order: number
+}
+
+export interface StudentDiscountItem {
+  id: number
+  student: number
+  student_name: string
+  discount_type: string
+  description: string
+  amount: string
+  applied_by: number | null
+  applied_by_name: string | null
+  created_at: string
+}
+
+export interface RecordPaymentRequest {
+  student_id: number
+  amount: number
+  method: string
+  notes?: string
+}
+
+export interface RecordPaymentResponse {
+  receipt_id: string
+  amount: string
+  method: string
+  paid_at: string
+}
+
+export interface FeeDefaulter {
+  student_id: string
+  student_name: string
+  section: string | null
+  total_amount: string
+  paid_amount: string
+  outstanding_balance: string
+  status: string
+  due_date: string | null
+  days_overdue: number
+}
+
+export interface PaymentReceipt {
+  receipt_number: string
+  school_name: string
+  school_address: string
+  student_name: string
+  student_id: string
+  section: string
+  amount: string
+  method: string
+  paid_at: string
+  paid_by_name: string
+  notes: string
+  balance_after: string
 }
 
 // ── Service ───────────────────────────────────────────────────────────
@@ -227,14 +364,170 @@ export const adminService = {
     return { data: data.data, stats: data.stats, pagination: data.pagination }
   },
 
-  // Shared data
-  async getGrades(): Promise<{ id: number; level: number; label: string }[]> {
+  // ── Academic Structure CRUD ─────────────────────────────────────────
+
+  // Academic Years
+  async getAcademicYears(): Promise<AcademicYear[]> {
+    const { data } = await api.get('/shared/academic-years/')
+    return data.results ?? data
+  },
+  async createAcademicYear(payload: Partial<AcademicYear>): Promise<AcademicYear> {
+    const { data } = await api.post('/shared/academic-years/', payload)
+    return data
+  },
+  async updateAcademicYear(id: number, payload: Partial<AcademicYear>): Promise<AcademicYear> {
+    const { data } = await api.patch(`/shared/academic-years/${id}/`, payload)
+    return data
+  },
+  async deleteAcademicYear(id: number): Promise<void> {
+    await api.delete(`/shared/academic-years/${id}/`)
+  },
+
+  // Grades
+  async getGrades(): Promise<Grade[]> {
     const { data } = await api.get('/shared/grades/')
     return data.results ?? data
   },
+  async createGrade(payload: Partial<Grade>): Promise<Grade> {
+    const { data } = await api.post('/shared/grades/', payload)
+    return data
+  },
+  async updateGrade(id: number, payload: Partial<Grade>): Promise<Grade> {
+    const { data } = await api.patch(`/shared/grades/${id}/`, payload)
+    return data
+  },
+  async deleteGrade(id: number): Promise<void> {
+    await api.delete(`/shared/grades/${id}/`)
+  },
 
-  async getSections(params?: Record<string, string>): Promise<{ id: number; name: string; grade: number }[]> {
+  // Sections
+  async getSections(params?: Record<string, string>): Promise<Section[]> {
     const { data } = await api.get('/shared/sections/', { params })
     return data.results ?? data
+  },
+  async createSection(payload: Partial<Section>): Promise<Section> {
+    const { data } = await api.post('/shared/sections/', payload)
+    return data
+  },
+  async updateSection(id: number, payload: Partial<Section>): Promise<Section> {
+    const { data } = await api.patch(`/shared/sections/${id}/`, payload)
+    return data
+  },
+  async deleteSection(id: number): Promise<void> {
+    await api.delete(`/shared/sections/${id}/`)
+  },
+
+  // Subjects
+  async getSubjects(params?: Record<string, string>): Promise<Subject[]> {
+    const { data } = await api.get('/shared/subjects/', { params })
+    return data.results ?? data
+  },
+  async createSubject(payload: Partial<Subject>): Promise<Subject> {
+    const { data } = await api.post('/shared/subjects/', payload)
+    return data
+  },
+  async updateSubject(id: number, payload: Partial<Subject>): Promise<Subject> {
+    const { data } = await api.patch(`/shared/subjects/${id}/`, payload)
+    return data
+  },
+  async deleteSubject(id: number): Promise<void> {
+    await api.delete(`/shared/subjects/${id}/`)
+  },
+
+  // Departments
+  async getDepartments(): Promise<Department[]> {
+    const { data } = await api.get('/shared/departments/')
+    return data.results ?? data
+  },
+  async createDepartment(payload: Partial<Department>): Promise<Department> {
+    const { data } = await api.post('/shared/departments/', payload)
+    return data
+  },
+  async updateDepartment(id: number, payload: Partial<Department>): Promise<Department> {
+    const { data } = await api.patch(`/shared/departments/${id}/`, payload)
+    return data
+  },
+  async deleteDepartment(id: number): Promise<void> {
+    await api.delete(`/shared/departments/${id}/`)
+  },
+
+  // Courses
+  async getCourses(params?: Record<string, string>): Promise<Course[]> {
+    const { data } = await api.get('/shared/courses/', { params })
+    return data.results ?? data
+  },
+  async createCourse(payload: Partial<Course>): Promise<Course> {
+    const { data } = await api.post('/shared/courses/', payload)
+    return data
+  },
+  async updateCourse(id: number, payload: Partial<Course>): Promise<Course> {
+    const { data } = await api.patch(`/shared/courses/${id}/`, payload)
+    return data
+  },
+  async deleteCourse(id: number): Promise<void> {
+    await api.delete(`/shared/courses/${id}/`)
+  },
+
+  // ── Fee Templates ───────────────────────────────────────────────────
+
+  async getFeeTemplates(params?: Record<string, string>): Promise<{ results: FeeTemplate[]; count: number }> {
+    const { data } = await api.get('/admin/fee-templates/', { params })
+    return { results: data.results ?? data, count: data.count ?? data.length }
+  },
+
+  async createFeeTemplate(payload: Partial<FeeTemplate>): Promise<FeeTemplate> {
+    const { data } = await api.post('/admin/fee-templates/', payload)
+    return data
+  },
+
+  async updateFeeTemplate(id: number, payload: Partial<FeeTemplate>): Promise<FeeTemplate> {
+    const { data } = await api.patch(`/admin/fee-templates/${id}/`, payload)
+    return data
+  },
+
+  async deleteFeeTemplate(id: number): Promise<void> {
+    await api.delete(`/admin/fee-templates/${id}/`)
+  },
+
+  async applyFeeTemplate(templateId: number): Promise<{ success: boolean; message: string; count: number }> {
+    const { data } = await api.post('/admin/apply-fee-template/', { template_id: templateId })
+    return data
+  },
+
+  // ── Student Discounts ───────────────────────────────────────────────
+
+  async getDiscounts(params?: Record<string, string>): Promise<{ results: StudentDiscountItem[]; count: number }> {
+    const { data } = await api.get('/admin/discounts/', { params })
+    return { results: data.results ?? data, count: data.count ?? data.length }
+  },
+
+  async createDiscount(payload: Partial<StudentDiscountItem>): Promise<StudentDiscountItem> {
+    const { data } = await api.post('/admin/discounts/', payload)
+    return data
+  },
+
+  async deleteDiscount(id: number): Promise<void> {
+    await api.delete(`/admin/discounts/${id}/`)
+  },
+
+  // ── Record Payment ──────────────────────────────────────────────────
+
+  async recordPayment(payload: RecordPaymentRequest): Promise<{ success: boolean; data: RecordPaymentResponse; message: string }> {
+    const { data } = await api.post('/admin/record-payment/', payload)
+    return data
+  },
+
+  // ── Fee Defaulters ──────────────────────────────────────────────────
+
+  async getFeeDefaulters(params?: Record<string, string>): Promise<FeeDefaulter[]> {
+    const { data } = await api.get('/admin/fee-defaulters/', { params })
+    return data.data ?? data.results ?? data
+  },
+
+  // ── Payment Receipt ─────────────────────────────────────────────────
+
+  async getPaymentReceipt(paymentId: number): Promise<PaymentReceipt> {
+    const { data } = await api.get(`/admin/payments/${paymentId}/receipt/`)
+    return data.data
   },
 }

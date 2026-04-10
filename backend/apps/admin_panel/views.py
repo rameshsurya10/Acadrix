@@ -7,7 +7,7 @@ from rest_framework.response import Response
 
 from apps.accounts.emails import send_welcome_email
 from apps.accounts.models import User
-from apps.accounts.permissions import IsAdmin
+from apps.accounts.permissions import IsSuperAdminOrAdmin as IsAdmin, IsFinanceOrAdmin, IsFinanceViewer
 from apps.accounts.utils import generate_id
 from apps.shared.models import Section
 from apps.student.models import StudentProfile
@@ -89,6 +89,10 @@ class AdmissionApplicationViewSet(viewsets.ModelViewSet):
                     phone=application.guardian_phone,
                     email=application.guardian_email, is_primary=True,
                 )
+
+            # Auto-apply fee template for the student's grade
+            from .finance_serializers import apply_fee_template_to_student
+            apply_fee_template_to_student(profile)
 
             application.student_created = profile
             application.save(update_fields=['student_created'])
@@ -262,8 +266,8 @@ class AdminAssessmentListView(GenericAPIView):
 # ── Admin Finance Overview ────────────────────────────────────────
 
 class AdminFinanceOverviewView(GenericAPIView):
-    """GET /admin/finance-overview/ — financial summary for admin."""
-    permission_classes = [IsAdmin]
+    """GET /admin/finance-overview/ — financial summary (read-only for admin, principal; full for finance)."""
+    permission_classes = [IsFinanceViewer]
 
     def get(self, request):
         from apps.student.models import TuitionAccount

@@ -9,7 +9,9 @@ class User(AbstractUser):
     """Custom user with role-based access. Every person in the system is a User."""
 
     class Role(models.TextChoices):
+        SUPER_ADMIN = 'super_admin', 'Super Admin'
         ADMIN = 'admin', 'Admin'
+        FINANCE = 'finance', 'Finance'
         PRINCIPAL = 'principal', 'Principal'
         TEACHER = 'teacher', 'Teacher'
         STUDENT = 'student', 'Student'

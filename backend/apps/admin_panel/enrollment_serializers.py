@@ -122,6 +122,10 @@ class EnrollStudentSerializer(serializers.Serializer):
             if guardians_data:
                 Guardian.objects.bulk_create([Guardian(student=profile, **g) for g in guardians_data])
 
+            # Auto-apply fee template for the student's grade
+            from apps.admin_panel.finance_serializers import apply_fee_template_to_student
+            apply_fee_template_to_student(profile)
+
         email_sent = send_welcome_email(
             email=user.email, first_name=user.first_name,
             role='student', generated_id=student_id,

@@ -1,161 +1,297 @@
+import { useEffect, useState, useMemo } from 'react'
 import PageLayout from '@/components/layout/PageLayout'
+import { Bone } from '@/components/shared/Skeleton'
+import { studentService, type GradeResult } from '@/services/student/studentService'
+
+/* ------------------------------------------------------------------ */
+/*  Page                                                               */
+/* ------------------------------------------------------------------ */
 
 export default function StudentTestResultsPage() {
+  const [grades, setGrades] = useState<GradeResult[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    studentService
+      .getGrades()
+      .then((list) => {
+        if (!cancelled) setGrades(Array.isArray(list) ? list : [])
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
+          setError(msg ?? 'Failed to load results.')
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => { cancelled = true }
+  }, [])
+
+  /* ── Computed stats ────────────────────────────────────────────── */
+  const stats = useMemo(() => {
+    if (grades.length === 0) return null
+
+    const total = grades.length
+    let sumPct = 0
+    const subjectTotals: Record<string, { sum: number; count: number }> = {}
+
+    for (const g of grades) {
+      const obtained = parseFloat(g.marks_obtained) || 0
+      const maxMarks = g.total_marks || 100
+      const pct = (obtained / maxMarks) * 100
+      sumPct += pct
+
+      if (!subjectTotals[g.subject_name]) {
+        subjectTotals[g.subject_name] = { sum: 0, count: 0 }
+      }
+      subjectTotals[g.subject_name].sum += pct
+      subjectTotals[g.subject_name].count += 1
+    }
+
+    const avgPct = sumPct / total
+
+    let bestSubject = ''
+    let bestAvg = 0
+    for (const [name, { sum, count }] of Object.entries(subjectTotals)) {
+      const avg = sum / count
+      if (avg > bestAvg) {
+        bestAvg = avg
+        bestSubject = name
+      }
+    }
+
+    return { total, avgPct, bestSubject, bestAvg }
+  }, [grades])
+
+  /* ── Grade color helper ────────────────────────────────────────── */
+  function gradeColor(letter: string): string {
+    if (!letter) return 'bg-surface-container-low text-on-surface-variant'
+    const l = letter.toUpperCase()
+    if (l.startsWith('A')) return 'bg-tertiary/10 text-tertiary'
+    if (l.startsWith('B')) return 'bg-primary/10 text-primary'
+    if (l.startsWith('C')) return 'bg-secondary-container text-on-secondary-container'
+    if (l.startsWith('D')) return 'bg-error/10 text-error'
+    if (l === 'F') return 'bg-error/20 text-error'
+    return 'bg-surface-container-low text-on-surface-variant'
+  }
+
+  function progressColor(pct: number): string {
+    if (pct >= 80) return 'bg-tertiary'
+    if (pct >= 60) return 'bg-primary'
+    if (pct >= 40) return 'bg-secondary'
+    return 'bg-error'
+  }
+
+  function formatDate(iso: string): string {
+    if (!iso) return '-'
+    return new Date(iso).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    })
+  }
+
   return (
-    <PageLayout sidebar>
-      <main className="flex-1 md:ml-64 pb-24 md:pb-8">
-        {/* Main Content Canvas */}
-        <div className="p-6 md:p-10 max-w-7xl mx-auto space-y-10">
-          {/* Page Header */}
-          <div className="space-y-1">
-            <span className="text-[0.75rem] font-bold text-on-surface-variant uppercase tracking-widest font-label">Academic Record</span>
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <h2 className="text-4xl md:text-5xl font-extrabold font-headline text-on-surface tracking-tight">Student: Test Results &amp; Feedback</h2>
-              <div className="flex items-center gap-2 px-3 py-1 bg-tertiary-container/10 rounded-full">
-                <span className="w-2 h-2 rounded-full bg-tertiary"></span>
-                <span className="text-xs font-bold text-tertiary uppercase tracking-wider font-label">Published</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Bento Grid Layout */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
-            {/* Primary Score Card: Large Display */}
-            <div className="md:col-span-8 bg-surface-container-lowest rounded-xl p-8 flex flex-col justify-between relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-8">
-                <span className="material-symbols-outlined text-primary/10 text-9xl select-none" style={{ fontVariationSettings: "'FILL' 1" }}>workspace_premium</span>
-              </div>
-              <div className="z-10 space-y-6">
-                <div>
-                  <p className="text-sm font-semibold text-on-surface-variant uppercase tracking-widest font-label">Latest Exam: Mid-Term Series 2024</p>
-                  <h3 className="text-6xl md:text-8xl font-black font-headline text-primary mt-2">A<span className="text-primary-container">+</span></h3>
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-4">
-                  <div className="space-y-1">
-                    <p className="text-xs text-on-surface-variant font-medium">Overall Score</p>
-                    <p className="text-xl font-bold font-headline">94.5%</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-xs text-on-surface-variant font-medium">Class Rank</p>
-                    <p className="text-xl font-bold font-headline">2nd / 32</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-xs text-on-surface-variant font-medium">Points Earned</p>
-                    <p className="text-xl font-bold font-headline">472.5 / 500</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-xs text-on-surface-variant font-medium">Percentile</p>
-                    <p className="text-xl font-bold font-headline">96th</p>
-                  </div>
-                </div>
-              </div>
-              <div className="mt-12 pt-8 border-t border-slate-100 flex items-center gap-4">
-                <div className="flex-1 bg-surface-container-low h-3 rounded-full overflow-hidden">
-                  <div className="bg-gradient-to-r from-primary to-primary-container h-full w-[94.5%]"></div>
-                </div>
-                <span className="text-sm font-bold font-headline text-on-surface-variant">Class Avg: 78%</span>
-              </div>
-            </div>
-
-            {/* Teacher Feedback Sidebar */}
-            <div className="md:col-span-4 bg-surface-container-low rounded-xl p-8 flex flex-col">
-              <div className="flex items-center gap-3 mb-6">
-                <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>chat_bubble_outline</span>
-                <h4 className="text-lg font-bold font-headline">Educator's Insight</h4>
-              </div>
-              <div className="flex-1 space-y-4 italic text-on-surface-variant text-sm leading-relaxed">
-                <p>"Your performance in the Advanced Calculus section was exemplary. You've shown a significant improvement in theoretical application compared to last term."</p>
-                <p>"Focus on refining your citation speed for the essay components. Overall, an outstanding effort that sets a high benchmark for the class."</p>
-              </div>
-              <div className="mt-8 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-secondary-fixed flex items-center justify-center overflow-hidden">
-                  <img alt="Teacher" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAtgnlnpHHtdeDYpSo5PFxENiMGF4f7LOKZd66rd768FeXFq8FdC6Tav-Q-N2jcg63uRWSyqmAWmYhy-hhRJLd4vCAFew-SjrqVTDMKf2ch9aayerzWhKuIZ7ncGecOpW1NNaVwuxrwm9b_lDvfTFHVYIJloS6_Qt2LXeGOD0bUDmqyglJF1oCzoXUU-i39bTQmXjPSSms7K8xNJiCtB37PL0sXnz_AwBcXnlXmiNqrOmywSb9yH9Emj1ycxh717baJHRtlomumq-2_" />
-                </div>
-                <div>
-                  <p className="text-xs font-bold font-headline">Dr. Sarah Jenkins</p>
-                  <p className="text-[10px] text-on-surface-variant uppercase tracking-tighter">Senior Academic Lead</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Subject Breakdown */}
-            <div className="md:col-span-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-surface-container-lowest p-6 rounded-lg transition-colors hover:bg-surface-container-high cursor-default">
-                <div className="flex justify-between items-start mb-4">
-                  <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest font-label">Mathematics</span>
-                  <span className="text-tertiary font-bold font-headline">98%</span>
-                </div>
-                <h5 className="font-bold text-lg mb-4">Advanced Calculus</h5>
-                <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-primary h-full w-[98%]"></div>
-                </div>
-                <p className="text-[10px] text-on-surface-variant mt-2 font-medium">Comparison: +12% above average</p>
-              </div>
-              <div className="bg-surface-container-lowest p-6 rounded-lg transition-colors hover:bg-surface-container-high cursor-default">
-                <div className="flex justify-between items-start mb-4">
-                  <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest font-label">Science</span>
-                  <span className="text-tertiary font-bold font-headline">91%</span>
-                </div>
-                <h5 className="font-bold text-lg mb-4">Quantum Physics</h5>
-                <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-primary h-full w-[91%]"></div>
-                </div>
-                <p className="text-[10px] text-on-surface-variant mt-2 font-medium">Comparison: +15% above average</p>
-              </div>
-              <div className="bg-surface-container-lowest p-6 rounded-lg transition-colors hover:bg-surface-container-high cursor-default">
-                <div className="flex justify-between items-start mb-4">
-                  <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest font-label">Humanities</span>
-                  <span className="text-on-surface font-bold font-headline">84%</span>
-                </div>
-                <h5 className="font-bold text-lg mb-4">Modern History</h5>
-                <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-primary-container h-full w-[84%]"></div>
-                </div>
-                <p className="text-[10px] text-on-surface-variant mt-2 font-medium">Comparison: +5% above average</p>
-              </div>
-              <div className="bg-surface-container-lowest p-6 rounded-lg transition-colors hover:bg-surface-container-high cursor-default">
-                <div className="flex justify-between items-start mb-4">
-                  <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest font-label">Languages</span>
-                  <span className="text-on-surface font-bold font-headline">88%</span>
-                </div>
-                <h5 className="font-bold text-lg mb-4">Literature &amp; Rhetoric</h5>
-                <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-primary-container h-full w-[88%]"></div>
-                </div>
-                <p className="text-[10px] text-on-surface-variant mt-2 font-medium">Comparison: +8% above average</p>
-              </div>
-            </div>
-
-            {/* Comparison Graph Context */}
-            <div className="md:col-span-12 bg-surface-container-low rounded-xl overflow-hidden">
-              <div className="p-8 flex flex-col md:flex-row gap-8 items-center">
-                <div className="flex-1 space-y-4">
-                  <h4 className="text-2xl font-bold font-headline text-on-surface">Trend Analysis</h4>
-                  <p className="text-on-surface-variant text-sm max-w-lg">Your performance has maintained a steady upward trajectory. Compared to the previous term, you have increased your overall proficiency by 7.2%, specifically in STEM subjects.</p>
-                  <div className="flex gap-4">
-                    <button className="px-6 py-3 bg-gradient-to-r from-primary to-primary-container text-on-primary font-bold rounded-lg text-sm transition-all hover:shadow-lg">Download PDF Report</button>
-                    <button className="px-6 py-3 bg-surface-container-lowest text-primary font-bold rounded-lg text-sm hover:bg-surface-container-high transition-colors">Detailed Analytics</button>
-                  </div>
-                </div>
-                <div className="w-full md:w-1/3 aspect-video bg-surface-container-lowest rounded-lg p-6 flex items-end justify-around gap-2 shadow-sm border border-slate-100/50">
-                  <div className="flex flex-col items-center gap-2 h-full justify-end">
-                    <div className="bg-slate-200 w-8 rounded-t-sm h-[60%]"></div>
-                    <span className="text-[8px] font-bold uppercase font-label">Term 1</span>
-                  </div>
-                  <div className="flex flex-col items-center gap-2 h-full justify-end">
-                    <div className="bg-slate-300 w-8 rounded-t-sm h-[75%]"></div>
-                    <span className="text-[8px] font-bold uppercase font-label">Term 2</span>
-                  </div>
-                  <div className="flex flex-col items-center gap-2 h-full justify-end">
-                    <div className="bg-primary w-8 rounded-t-sm h-[95%]"></div>
-                    <span className="text-[8px] font-bold uppercase font-label">Term 3</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+    <PageLayout>
+      <main className="max-w-7xl mx-auto px-4 md:px-6 py-10 pb-32 space-y-10">
+        {/* Header */}
+        <div className="space-y-1">
+          <span className="font-label text-xs font-semibold tracking-widest text-on-surface-variant uppercase mb-2 block">
+            Academic Record
+          </span>
+          <h2 className="font-headline font-extrabold text-3xl md:text-4xl text-on-surface tracking-tight">
+            Test Results &amp; Grades
+          </h2>
         </div>
+
+        {loading ? (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <Bone className="h-28 rounded-xl" />
+              <Bone className="h-28 rounded-xl" />
+              <Bone className="h-28 rounded-xl" />
+            </div>
+            <Bone className="w-full h-64 rounded-xl" />
+          </div>
+        ) : error ? (
+          <div className="bg-error/10 text-error rounded-xl p-8 text-center">
+            <span className="material-symbols-outlined text-4xl mb-2 block">error</span>
+            <p className="font-headline text-lg font-bold">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-4 px-6 py-2 bg-error text-on-error rounded-lg text-sm font-bold"
+            >
+              Retry
+            </button>
+          </div>
+        ) : grades.length === 0 ? (
+          /* ── Empty state ─────────────────────────────────────────── */
+          <div className="bg-surface-container-lowest rounded-xl p-12 md:p-16 text-center relative overflow-hidden">
+            <span
+              className="material-symbols-outlined text-primary/10 select-none absolute top-6 right-6"
+              style={{ fontSize: '8rem', fontVariationSettings: "'FILL' 1" }}
+            >
+              workspace_premium
+            </span>
+            <div className="relative z-10 max-w-md mx-auto space-y-4">
+              <span className="material-symbols-outlined text-5xl text-on-surface-variant/40 block">
+                quiz
+              </span>
+              <h3 className="font-headline font-extrabold text-2xl text-on-surface">
+                No results published yet
+              </h3>
+              <p className="text-on-surface-variant leading-relaxed">
+                Check back after exams. Once your teachers publish grades and feedback,
+                they will appear here with detailed breakdowns.
+              </p>
+              <div className="flex items-center justify-center gap-2 pt-2">
+                <span className="material-symbols-outlined text-tertiary text-base">info</span>
+                <p className="text-sm text-on-surface-variant">
+                  Check back after your next assessment period.
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* ── Summary cards ───────────────────────────────────── */}
+            {stats && (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {/* Total assessments */}
+                <div className="bg-surface-container-lowest rounded-xl p-6 flex items-start gap-4">
+                  <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>
+                      assignment
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-0.5">
+                      Total Assessments
+                    </p>
+                    <p className="text-2xl font-headline font-extrabold text-on-surface">
+                      {stats.total}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Average marks */}
+                <div className="bg-surface-container-lowest rounded-xl p-6 flex items-start gap-4">
+                  <div className="w-11 h-11 rounded-xl bg-tertiary/10 flex items-center justify-center flex-shrink-0">
+                    <span className="material-symbols-outlined text-tertiary" style={{ fontVariationSettings: "'FILL' 1" }}>
+                      trending_up
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-0.5">
+                      Average Score
+                    </p>
+                    <p className="text-2xl font-headline font-extrabold text-on-surface">
+                      {stats.avgPct.toFixed(1)}%
+                    </p>
+                  </div>
+                </div>
+
+                {/* Best subject */}
+                <div className="bg-surface-container-lowest rounded-xl p-6 flex items-start gap-4">
+                  <div className="w-11 h-11 rounded-xl bg-secondary-container flex items-center justify-center flex-shrink-0">
+                    <span className="material-symbols-outlined text-on-secondary-container" style={{ fontVariationSettings: "'FILL' 1" }}>
+                      emoji_events
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-0.5">
+                      Best Subject
+                    </p>
+                    <p className="text-lg font-headline font-extrabold text-on-surface truncate">
+                      {stats.bestSubject}
+                    </p>
+                    <p className="text-xs text-on-surface-variant">{stats.bestAvg.toFixed(1)}% avg</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ── Results table ───────────────────────────────────── */}
+            <div className="bg-surface-container-lowest rounded-xl overflow-hidden">
+              {/* Desktop header */}
+              <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-3 bg-surface-container-low border-b border-outline-variant/20 text-xs font-bold text-on-surface-variant uppercase tracking-wider">
+                <div className="col-span-2">Subject</div>
+                <div className="col-span-2">Assessment</div>
+                <div className="col-span-3">Marks</div>
+                <div className="col-span-1 text-center">Grade</div>
+                <div className="col-span-2">Date</div>
+                <div className="col-span-2">Remarks</div>
+              </div>
+
+              <div className="divide-y divide-outline-variant/10">
+                {grades.map((g, idx) => {
+                  const obtained = parseFloat(g.marks_obtained) || 0
+                  const maxMarks = g.total_marks || 100
+                  const pct = (obtained / maxMarks) * 100
+
+                  return (
+                    <div
+                      key={`${g.assessment_title}-${g.subject_name}-${idx}`}
+                      className="grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-4 px-4 md:px-6 py-4 md:items-center hover:bg-surface-container-low/50 transition-colors"
+                    >
+                      {/* Subject */}
+                      <div className="md:col-span-2">
+                        <p className="text-sm font-semibold text-on-surface">{g.subject_name}</p>
+                        <p className="text-xs text-on-surface-variant md:hidden">{g.section}</p>
+                      </div>
+
+                      {/* Assessment */}
+                      <div className="md:col-span-2">
+                        <p className="text-sm text-on-surface">{g.assessment_title}</p>
+                      </div>
+
+                      {/* Marks with progress bar */}
+                      <div className="md:col-span-3 space-y-1.5">
+                        <div className="flex items-baseline gap-1.5">
+                          <span className="text-sm font-bold text-on-surface">{obtained}</span>
+                          <span className="text-xs text-on-surface-variant">/ {maxMarks}</span>
+                          <span className="ml-auto text-xs font-semibold text-on-surface-variant">
+                            {pct.toFixed(0)}%
+                          </span>
+                        </div>
+                        <div className="w-full h-1.5 rounded-full bg-surface-container-high overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all duration-500 ${progressColor(pct)}`}
+                            style={{ width: `${Math.min(pct, 100)}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Grade */}
+                      <div className="md:col-span-1 flex md:justify-center">
+                        <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold ${gradeColor(g.letter_grade)}`}>
+                          {g.letter_grade || '-'}
+                        </span>
+                      </div>
+
+                      {/* Date */}
+                      <div className="md:col-span-2">
+                        <p className="text-xs text-on-surface-variant">{formatDate(g.graded_at)}</p>
+                      </div>
+
+                      {/* Remarks */}
+                      <div className="md:col-span-2">
+                        <p className="text-xs text-on-surface-variant italic">
+                          {g.remarks || '-'}
+                        </p>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </>
+        )}
       </main>
     </PageLayout>
-  );
+  )
 }

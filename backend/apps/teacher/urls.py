@@ -5,8 +5,10 @@ from apps.teacher.enrollment_views import TeacherEnrollStudentView
 from apps.teacher.views import (
     AssessmentViewSet,
     AssignmentViewSet,
+    BulkMarkAttendanceView,
     GradeEntryViewSet,
     HealthObservationViewSet,
+    TeacherAttendanceView,
     TeacherDashboardView,
     TeacherProfileViewSet,
 )
@@ -27,5 +29,7 @@ router.register(
 urlpatterns = [
     path('dashboard/', TeacherDashboardView.as_view(), name='dashboard'),
     path('enroll/student/', TeacherEnrollStudentView.as_view(), name='enroll-student'),
+    path('attendance/bulk-mark/', BulkMarkAttendanceView.as_view(), name='bulk-mark-attendance'),
+    path('attendance/', TeacherAttendanceView.as_view(), name='teacher-attendance'),
     path('', include(router.urls)),
 ]

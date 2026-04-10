@@ -13,8 +13,16 @@ class IsRole(BasePermission):
         )
 
 
+class IsSuperAdmin(IsRole):
+    allowed_roles = ['super_admin']
+
+
 class IsAdmin(IsRole):
     allowed_roles = ['admin']
+
+
+class IsFinance(IsRole):
+    allowed_roles = ['finance']
 
 
 class IsPrincipal(IsRole):
@@ -29,9 +37,23 @@ class IsStudent(IsRole):
     allowed_roles = ['student']
 
 
+class IsSuperAdminOrAdmin(IsRole):
+    allowed_roles = ['super_admin', 'admin']
+
+
+class IsFinanceOrAdmin(IsRole):
+    """Finance staff + super admin for billing. Admin gets read-only via separate view."""
+    allowed_roles = ['super_admin', 'finance']
+
+
+class IsFinanceViewer(IsRole):
+    """Anyone who can VIEW finance data (read-only for admin/principal, full for finance/super_admin)."""
+    allowed_roles = ['super_admin', 'admin', 'finance', 'principal']
+
+
 class IsAdminOrPrincipal(IsRole):
-    allowed_roles = ['admin', 'principal']
+    allowed_roles = ['super_admin', 'admin', 'principal']
 
 
 class IsStaff(IsRole):
-    allowed_roles = ['admin', 'principal', 'teacher']
+    allowed_roles = ['super_admin', 'admin', 'finance', 'principal', 'teacher']

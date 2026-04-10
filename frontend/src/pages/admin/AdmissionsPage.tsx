@@ -31,6 +31,7 @@ export default function AdmissionsPage() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [updatingStatus, setUpdatingStatus] = useState(false)
+  const [confirmAction, setConfirmAction] = useState<{ action: string; label: string } | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -65,17 +66,22 @@ export default function AdmissionsPage() {
     }
   }
 
-  async function handleStatusUpdate(newStatus: string) {
-    if (!selectedDetail) return
+  function requestStatusUpdate(action: string, label: string) {
+    setConfirmAction({ action, label })
+  }
+
+  async function executeStatusUpdate() {
+    if (!selectedDetail || !confirmAction) return
     setUpdatingStatus(true)
     try {
-      const updated = await adminService.updateApplication(selectedDetail.id, { status: newStatus as AdmissionApplication['status'] })
+      const updated = await adminService.updateApplication(selectedDetail.id, { status: confirmAction.action as AdmissionApplication['status'] })
       setSelectedDetail(updated)
       setApplications(prev => prev.map(a => a.id === updated.id ? { ...a, status: updated.status } : a))
     } catch (err) {
       console.error('Failed to update status:', err)
     } finally {
       setUpdatingStatus(false)
+      setConfirmAction(null)
     }
   }
 
@@ -287,24 +293,58 @@ export default function AdmissionsPage() {
                     </div>
                   )}
 
+                  {/* Confirmation Prompt */}
+                  {confirmAction && (
+                    <div className="mt-6 bg-surface-container-high rounded-xl p-4 flex items-center justify-between gap-4">
+                      <p className="text-sm font-semibold text-on-surface">
+                        Are you sure you want to <span className="lowercase">{confirmAction.label}</span> this application?
+                      </p>
+                      <div className="flex gap-2 flex-shrink-0">
+                        <button
+                          onClick={executeStatusUpdate}
+                          disabled={updatingStatus}
+                          className="px-4 py-2 bg-primary text-on-primary rounded-lg text-sm font-bold hover:opacity-90 transition-all disabled:opacity-50"
+                        >
+                          {updatingStatus ? 'Processing...' : 'Yes'}
+                        </button>
+                        <button
+                          onClick={() => setConfirmAction(null)}
+                          disabled={updatingStatus}
+                          className="px-4 py-2 bg-surface-container-lowest text-on-surface-variant rounded-lg text-sm font-bold hover:bg-surface transition-all disabled:opacity-50"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Actions */}
-                  <div className="mt-8 md:mt-10 flex gap-3 md:gap-4">
+                  <div className="mt-4 md:mt-6 flex gap-3 md:gap-4">
                     {selectedDetail.status !== 'finalized' && selectedDetail.status !== 'rejected' && (
                       <button
-                        onClick={() => handleStatusUpdate('finalized')}
-                        disabled={updatingStatus}
+                        onClick={() => requestStatusUpdate('finalized', 'Complete Admission')}
+                        disabled={updatingStatus || confirmAction !== null}
                         className="flex-1 py-3 md:py-4 bg-tertiary text-on-tertiary rounded-xl font-bold shadow-md hover:opacity-90 transition-all active:scale-95 disabled:opacity-50"
                       >
-                        {updatingStatus ? 'Processing...' : 'Complete Admission'}
+                        Complete Admission
                       </button>
                     )}
                     {selectedDetail.status === 'pending' && (
                       <button
-                        onClick={() => handleStatusUpdate('verified')}
-                        disabled={updatingStatus}
+                        onClick={() => requestStatusUpdate('verified', 'Verify')}
+                        disabled={updatingStatus || confirmAction !== null}
                         className="px-4 py-3 md:py-4 bg-primary text-on-primary rounded-xl font-bold hover:opacity-90 transition-all disabled:opacity-50"
                       >
                         Verify
+                      </button>
+                    )}
+                    {selectedDetail.status !== 'finalized' && selectedDetail.status !== 'rejected' && (
+                      <button
+                        onClick={() => requestStatusUpdate('rejected', 'Reject')}
+                        disabled={updatingStatus || confirmAction !== null}
+                        className="px-4 py-3 md:py-4 bg-error text-on-primary rounded-xl font-bold hover:opacity-90 transition-all active:scale-95 disabled:opacity-50"
+                      >
+                        Reject
                       </button>
                     )}
                   </div>

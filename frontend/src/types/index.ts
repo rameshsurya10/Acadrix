@@ -1,6 +1,6 @@
 // ─── Shared ─────────────────────────────────────────────────────────────────
 
-export type Role = 'admin' | 'principal' | 'teacher' | 'student'
+export type Role = 'super_admin' | 'admin' | 'finance' | 'principal' | 'teacher' | 'student'
 
 export interface PaginatedResponse<T> {
   count: number

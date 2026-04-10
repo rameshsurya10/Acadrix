@@ -1,187 +1,254 @@
+import { useEffect, useState } from 'react'
 import PageLayout from '@/components/layout/PageLayout'
+import { SkeletonDashboard } from '@/components/shared/Skeleton'
+import { useAuth } from '@/contexts/AuthContext'
+import { studentService, type StudentDashboardData } from '@/services/student/studentService'
+
+/* ------------------------------------------------------------------ */
+/*  Helpers                                                            */
+/* ------------------------------------------------------------------ */
+
+function statusColor(status: string) {
+  const s = status.toLowerCase()
+  if (s === 'paid' || s === 'settled') return 'bg-tertiary/10 text-tertiary'
+  if (s === 'overdue') return 'bg-error/10 text-error'
+  return 'bg-primary/10 text-primary'
+}
+
+const BORDER_COLORS = ['border-primary', 'border-secondary', 'border-tertiary']
+
+/* ------------------------------------------------------------------ */
+/*  Page                                                               */
+/* ------------------------------------------------------------------ */
 
 export default function StudentDashboardPage() {
+  const { user } = useAuth()
+  const [data, setData] = useState<StudentDashboardData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    studentService
+      .getDashboard()
+      .then((d) => { if (!cancelled) setData(d) })
+      .catch((err) => { if (!cancelled) setError(err?.response?.data?.detail ?? 'Failed to load dashboard.') })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [])
+
+  if (loading) {
+    return (
+      <PageLayout>
+        <SkeletonDashboard />
+      </PageLayout>
+    )
+  }
+
+  if (error || !data) {
+    return (
+      <PageLayout>
+        <main className="max-w-7xl mx-auto px-4 md:px-6 py-10 pb-32">
+          <div className="bg-error/10 text-error rounded-xl p-8 text-center">
+            <span className="material-symbols-outlined text-4xl mb-2 block">error</span>
+            <p className="font-headline text-lg font-bold">{error ?? 'Something went wrong'}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-4 px-6 py-2 bg-error text-on-error rounded-lg text-sm font-bold"
+            >
+              Retry
+            </button>
+          </div>
+        </main>
+      </PageLayout>
+    )
+  }
+
+  const { profile, attendance, upcoming_schedule, activities, tuition } = data
+  const attendPct = attendance.percentage ?? 0
+
   return (
     <PageLayout>
-      <main className="max-w-7xl mx-auto px-6 pt-8 pb-32">
-        {/* Hero Section: Student Identity */}
+      <main className="max-w-7xl mx-auto px-4 md:px-6 py-10 pb-32">
+        {/* ── Hero ─────────────────────────────────────────────── */}
         <section className="mb-10 flex flex-col md:flex-row gap-8 items-end">
           <div className="flex-1">
-            <p className="text-[0.75rem] font-bold tracking-[0.15em] uppercase text-on-surface-variant mb-2 font-['Inter']">Student Profile</p>
-            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-on-surface mb-2">Julian Thorne</h1>
+            <p className="text-[0.75rem] font-bold tracking-[0.15em] uppercase text-on-surface-variant mb-2 font-label">
+              Student Profile
+            </p>
+            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-on-surface font-headline mb-2">
+              {profile.full_name || user?.full_name || 'Student'}
+            </h1>
             <div className="flex flex-wrap gap-3">
-              <span className="px-4 py-1.5 bg-secondary-container text-on-secondary-container rounded-full text-sm font-medium">Grade 11-B</span>
-              <span className="px-4 py-1.5 bg-surface-container-high text-on-surface-variant rounded-full text-sm font-medium">ID: #STU-99210</span>
-              <span className="px-4 py-1.5 bg-tertiary-fixed text-on-tertiary-fixed-variant rounded-full text-sm font-medium">Honor Roll</span>
+              {profile.section && (
+                <span className="px-4 py-1.5 bg-secondary-container text-on-secondary-container rounded-full text-sm font-medium">
+                  {profile.section}
+                </span>
+              )}
+              <span className="px-4 py-1.5 bg-surface-container-high text-on-surface-variant rounded-full text-sm font-medium">
+                ID: {profile.student_id}
+              </span>
+              {profile.house && (
+                <span className="px-4 py-1.5 bg-tertiary-fixed text-on-tertiary-fixed-variant rounded-full text-sm font-medium">
+                  {profile.house}
+                </span>
+              )}
             </div>
           </div>
+
+          {/* Attendance quick stat */}
           <div className="w-full md:w-auto flex gap-4">
             <div className="flex-1 md:w-48 p-4 bg-surface-container-lowest rounded-xl">
               <p className="text-[0.65rem] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Attendance</p>
-              <p className="text-2xl font-bold text-primary">98.4%</p>
-            </div>
-            <div className="flex-1 md:w-48 p-4 bg-surface-container-lowest rounded-xl">
-              <p className="text-[0.65rem] font-bold uppercase tracking-widest text-on-surface-variant mb-1">GPA</p>
-              <p className="text-2xl font-bold text-tertiary">3.92</p>
+              <p className="text-2xl font-bold text-primary">{attendPct.toFixed(1)}%</p>
+              <p className="text-xs text-on-surface-variant mt-1">
+                {attendance.present_days}/{attendance.total_days} days
+              </p>
             </div>
           </div>
         </section>
 
-        {/* Bento Grid Layout */}
+        {/* ── Bento Grid ───────────────────────────────────────── */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-          {/* Performance Section: Main Card */}
+
+          {/* Attendance card with progress bar */}
           <div className="md:col-span-8 bg-surface-container-lowest rounded-xl p-8">
-            <div className="flex justify-between items-center mb-8">
-              <h2 className="text-2xl font-bold tracking-tight">Academic Performance</h2>
-              <button className="text-primary text-sm font-semibold hover:underline">View Full Report</button>
-            </div>
-            <div className="space-y-6">
-              <div>
-                <div className="flex justify-between items-end mb-2">
-                  <span className="font-semibold text-on-surface">Advanced Mathematics</span>
-                  <span className="text-sm font-bold text-primary">94/100</span>
-                </div>
-                <div className="h-2 w-full bg-surface-container-low rounded-full overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-primary to-primary-container rounded-full" style={{ width: '94%' }}></div>
-                </div>
-              </div>
-              <div>
-                <div className="flex justify-between items-end mb-2">
-                  <span className="font-semibold text-on-surface">Theoretical Physics</span>
-                  <span className="text-sm font-bold text-primary">89/100</span>
-                </div>
-                <div className="h-2 w-full bg-surface-container-low rounded-full overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-primary to-primary-container rounded-full" style={{ width: '89%' }}></div>
-                </div>
-              </div>
-              <div>
-                <div className="flex justify-between items-end mb-2">
-                  <span className="font-semibold text-on-surface">English Literature</span>
-                  <span className="text-sm font-bold text-primary">92/100</span>
-                </div>
-                <div className="h-2 w-full bg-surface-container-low rounded-full overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-primary to-primary-container rounded-full" style={{ width: '92%' }}></div>
-                </div>
-              </div>
-              <div>
-                <div className="flex justify-between items-end mb-2">
-                  <span className="font-semibold text-on-surface">Macroeconomics</span>
-                  <span className="text-sm font-bold text-primary">85/100</span>
-                </div>
-                <div className="h-2 w-full bg-surface-container-low rounded-full overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-primary to-primary-container rounded-full" style={{ width: '85%' }}></div>
-                </div>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold tracking-tight font-headline">Attendance Overview</h2>
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary">calendar_today</span>
+                <span className="text-sm font-bold text-on-surface-variant">
+                  {attendance.present_days} of {attendance.total_days} days
+                </span>
               </div>
             </div>
-            {/* Visual Chart Placeholder */}
-            <div className="mt-10 p-6 bg-surface-container-low rounded-xl">
-              <div className="flex items-center gap-2 mb-4">
-                <span className="material-symbols-outlined text-primary">trending_up</span>
-                <span className="text-sm font-bold uppercase tracking-widest text-on-surface-variant">Yearly Progress</span>
+
+            {/* Big progress bar */}
+            <div className="mb-6">
+              <div className="flex justify-between items-end mb-2">
+                <span className="text-sm font-semibold text-on-surface">Attendance rate</span>
+                <span className="text-sm font-bold text-primary">{attendPct.toFixed(1)}%</span>
               </div>
-              <div className="h-32 flex items-end justify-between gap-2">
-                <div className="w-full bg-primary/20 rounded-t-lg" style={{ height: '60%' }}></div>
-                <div className="w-full bg-primary/30 rounded-t-lg" style={{ height: '75%' }}></div>
-                <div className="w-full bg-primary/40 rounded-t-lg" style={{ height: '70%' }}></div>
-                <div className="w-full bg-primary/60 rounded-t-lg" style={{ height: '85%' }}></div>
-                <div className="w-full bg-primary/80 rounded-t-lg" style={{ height: '92%' }}></div>
-                <div className="w-full bg-primary rounded-t-lg" style={{ height: '98%' }}></div>
+              <div className="h-3 w-full bg-surface-container-low rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-primary to-primary-container rounded-full transition-all duration-700"
+                  style={{ width: `${Math.min(attendPct, 100)}%` }}
+                />
               </div>
-              <div className="flex justify-between mt-2 px-1 text-[10px] font-bold text-outline uppercase tracking-tighter">
-                <span>Sep</span><span>Oct</span><span>Nov</span><span>Dec</span><span>Jan</span><span>Feb</span>
+            </div>
+
+            {/* Mini stat row */}
+            <div className="grid grid-cols-3 gap-4">
+              <div className="bg-surface-container-low p-4 rounded-lg">
+                <p className="text-[0.65rem] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Present</p>
+                <p className="text-xl font-bold text-tertiary">{attendance.present_days}</p>
+              </div>
+              <div className="bg-surface-container-low p-4 rounded-lg">
+                <p className="text-[0.65rem] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Absent</p>
+                <p className="text-xl font-bold text-error">{attendance.total_days - attendance.present_days}</p>
+              </div>
+              <div className="bg-surface-container-low p-4 rounded-lg">
+                <p className="text-[0.65rem] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Total</p>
+                <p className="text-xl font-bold text-on-surface">{attendance.total_days}</p>
               </div>
             </div>
           </div>
 
-          {/* Health Status Side Column */}
+          {/* Activities side column */}
           <div className="md:col-span-4 space-y-6">
-            {/* Health Card */}
-            <div className="bg-surface-container-lowest rounded-xl p-6 relative overflow-hidden">
-              <div className="flex justify-between items-start mb-6">
-                <h3 className="text-xl font-bold tracking-tight">Health Status</h3>
-                <div className="w-3 h-3 rounded-full bg-tertiary animate-pulse"></div>
-              </div>
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="bg-surface-container-low p-4 rounded-lg">
-                  <p className="text-[0.65rem] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Height</p>
-                  <p className="text-lg font-bold">178 <span className="text-sm font-normal text-outline">cm</span></p>
-                </div>
-                <div className="bg-surface-container-low p-4 rounded-lg">
-                  <p className="text-[0.65rem] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Weight</p>
-                  <p className="text-lg font-bold">72 <span className="text-sm font-normal text-outline">cm</span></p>
-                </div>
-              </div>
-              <div className="p-4 bg-tertiary/10 rounded-lg border border-tertiary/5">
-                <p className="text-xs font-semibold text-tertiary mb-1">Recent Check: Jan 15, 2024</p>
-                <p className="text-sm text-on-surface-variant leading-relaxed">All vitals are normal. Recommended: increase water intake during sports.</p>
-              </div>
-            </div>
-            {/* Extracurricular Card */}
             <div className="bg-surface-container-low rounded-xl p-6">
-              <h3 className="text-xl font-bold tracking-tight mb-6">Extracurricular</h3>
-              <div className="space-y-4">
-                <div className="flex items-center gap-4 bg-surface-container-lowest p-3 rounded-xl">
-                  <div className="w-12 h-12 rounded-lg bg-secondary-container flex items-center justify-center">
-                    <span className="material-symbols-outlined text-on-secondary-container">sports_soccer</span>
-                  </div>
-                  <div>
-                    <p className="font-bold text-sm">Varsity Football</p>
-                    <p className="text-xs text-on-surface-variant">Team Captain • Active</p>
-                  </div>
+              <h3 className="text-xl font-bold tracking-tight font-headline mb-6">Activities</h3>
+
+              {activities.length === 0 ? (
+                <div className="text-center py-8 text-on-surface-variant">
+                  <span className="material-symbols-outlined text-3xl mb-2 block">sports_kabaddi</span>
+                  <p className="text-sm">No activities yet</p>
                 </div>
-                <div className="flex items-center gap-4 bg-surface-container-lowest p-3 rounded-xl">
-                  <div className="w-12 h-12 rounded-lg bg-secondary-container flex items-center justify-center">
-                    <span className="material-symbols-outlined text-on-secondary-container">palette</span>
-                  </div>
-                  <div>
-                    <p className="font-bold text-sm">Digital Arts Club</p>
-                    <p className="text-xs text-on-surface-variant">Member • Friday 4PM</p>
-                  </div>
+              ) : (
+                <div className="space-y-4">
+                  {activities.map((act) => (
+                    <div key={act.id} className="flex items-center gap-4 bg-surface-container-lowest p-3 rounded-xl">
+                      <div className="w-12 h-12 rounded-lg bg-secondary-container flex items-center justify-center">
+                        <span className="material-symbols-outlined text-on-secondary-container">interests</span>
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-bold text-sm truncate">{act.name}</p>
+                        <p className="text-xs text-on-surface-variant truncate">
+                          {act.role} {act.schedule ? `\u00b7 ${act.schedule}` : ''}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <div className="flex items-center gap-4 bg-surface-container-lowest p-3 rounded-xl">
-                  <div className="w-12 h-12 rounded-lg bg-secondary-container flex items-center justify-center">
-                    <span className="material-symbols-outlined text-on-secondary-container">menu_book</span>
+              )}
+            </div>
+
+            {/* Tuition summary */}
+            {tuition && (
+              <div className="bg-surface-container-lowest rounded-xl p-6 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -mr-10 -mt-10" />
+                <h3 className="text-xl font-bold tracking-tight font-headline mb-4">Tuition</h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-on-surface-variant">Semester</span>
+                    <span className="font-bold text-on-surface">{tuition.semester}</span>
                   </div>
-                  <div>
-                    <p className="font-bold text-sm">Debate Society</p>
-                    <p className="text-xs text-on-surface-variant">Regional Finalist</p>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-on-surface-variant">Outstanding</span>
+                    <span className="font-bold text-primary">${Number(tuition.outstanding_balance).toLocaleString()}</span>
                   </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-on-surface-variant">Status</span>
+                    <span className={`px-3 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider ${statusColor(tuition.status)}`}>
+                      {tuition.status}
+                    </span>
+                  </div>
+                  {tuition.due_date && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-on-surface-variant">Due</span>
+                      <span className="font-medium text-on-surface">
+                        {new Date(tuition.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
-              <button className="w-full mt-6 py-3 bg-surface-container-highest rounded-lg text-sm font-bold uppercase tracking-widest text-on-surface-variant hover:bg-surface-container-high transition-colors">
-                Discover More
-              </button>
-            </div>
+            )}
           </div>
         </div>
 
-        {/* Schedule Preview Ribbon */}
+        {/* ── Schedule Ribbon ──────────────────────────────────── */}
         <section className="mt-10">
-          <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-on-surface-variant mb-4">Upcoming Schedule</h3>
-          <div className="flex overflow-x-auto gap-4 pb-4">
-            <div className="min-w-[280px] bg-surface-container-lowest p-5 rounded-xl border-l-4 border-primary">
-              <p className="text-[0.65rem] font-bold text-primary mb-1 uppercase">Today • 10:30 AM</p>
-              <h4 className="font-bold mb-1">Advanced Calculus Exam</h4>
-              <p className="text-sm text-on-surface-variant">Room 402 • Block B</p>
+          <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-on-surface-variant mb-4 font-label">
+            Upcoming Schedule
+          </h3>
+
+          {upcoming_schedule.length === 0 ? (
+            <div className="bg-surface-container-lowest rounded-xl p-8 text-center text-on-surface-variant">
+              <span className="material-symbols-outlined text-3xl mb-2 block">event_busy</span>
+              <p className="text-sm">No upcoming classes scheduled</p>
             </div>
-            <div className="min-w-[280px] bg-surface-container-lowest p-5 rounded-xl border-l-4 border-secondary">
-              <p className="text-[0.65rem] font-bold text-secondary mb-1 uppercase">Today • 02:00 PM</p>
-              <h4 className="font-bold mb-1">Football Practice</h4>
-              <p className="text-sm text-on-surface-variant">East Field</p>
+          ) : (
+            <div className="flex overflow-x-auto gap-4 pb-4 -mx-4 px-4 md:mx-0 md:px-0">
+              {upcoming_schedule.map((s, i) => (
+                <div
+                  key={`${s.subject}-${s.day}-${s.start_time}`}
+                  className={`min-w-[280px] bg-surface-container-lowest p-5 rounded-xl border-l-4 ${BORDER_COLORS[i % BORDER_COLORS.length]}`}
+                >
+                  <p className="text-[0.65rem] font-bold text-on-surface-variant mb-1 uppercase">
+                    {s.day} &middot; {s.start_time} &ndash; {s.end_time}
+                  </p>
+                  <h4 className="font-bold mb-1">{s.subject}</h4>
+                  <p className="text-sm text-on-surface-variant">
+                    {s.location}
+                    {s.teacher ? ` \u00b7 ${s.teacher}` : ''}
+                  </p>
+                </div>
+              ))}
             </div>
-            <div className="min-w-[280px] bg-white/80 backdrop-blur-[20px] p-5 rounded-xl border-l-4 border-tertiary">
-              <p className="text-[0.65rem] font-bold text-tertiary mb-1 uppercase">Tomorrow • 09:00 AM</p>
-              <h4 className="font-bold mb-1">Literature Review</h4>
-              <p className="text-sm text-on-surface-variant">Library Hall</p>
-            </div>
-            <div className="min-w-[280px] bg-surface-container-lowest p-5 rounded-xl border-l-4 border-primary">
-              <p className="text-[0.65rem] font-bold text-primary mb-1 uppercase">Feb 12 • 11:45 AM</p>
-              <h4 className="font-bold mb-1">Guest Lecture: AI</h4>
-              <p className="text-sm text-on-surface-variant">Main Auditorium</p>
-            </div>
-          </div>
+          )}
         </section>
       </main>
     </PageLayout>
-  );
+  )
 }

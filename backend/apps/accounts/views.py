@@ -71,7 +71,7 @@ class IdentifyView(GenericAPIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        if user.role in ('admin', 'principal'):
+        if user.role in ('super_admin', 'admin', 'finance', 'principal'):
             return Response({
                 'success': True,
                 'data': {'method': 'password', 'role': user.role, 'name': user.first_name},
@@ -299,6 +299,49 @@ class MeView(GenericAPIView):
     def get(self, request):
         return Response(self.get_serializer(request.user).data)
 
+    def patch(self, request):
+        user = request.user
+        allowed = {'first_name', 'last_name', 'phone'}
+        for field, value in request.data.items():
+            if field in allowed:
+                setattr(user, field, value)
+        user.save(update_fields=[f for f in request.data if f in allowed])
+        return Response(self.get_serializer(user).data)
+
+
+class ChangePasswordView(GenericAPIView):
+    """POST /api/v1/auth/change-password/ — authenticated user changes own password."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        old_password = request.data.get('old_password', '')
+        new_password = request.data.get('new_password', '')
+        confirm_password = request.data.get('confirm_password', '')
+
+        if not request.user.check_password(old_password):
+            return Response(
+                {'success': False, 'error': 'Current password is incorrect.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if new_password != confirm_password:
+            return Response(
+                {'success': False, 'error': 'New passwords do not match.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if len(new_password) < 8:
+            return Response(
+                {'success': False, 'error': 'Password must be at least 8 characters.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        request.user.set_password(new_password)
+        request.user.save(update_fields=['password'])
+
+        return Response({
+            'success': True,
+            'message': 'Password changed successfully.',
+        })
+
 
 class LogoutView(GenericAPIView):
     permission_classes = [IsAuthenticated]
@@ -370,9 +413,9 @@ class GoogleOAuthCallbackView(GenericAPIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        if user.role in ('admin', 'principal'):
+        if user.role in ('super_admin', 'admin', 'finance', 'principal'):
             return Response(
-                {'success': False, 'error': 'Google sign-in is not available for admin accounts. Please use email and password.'},
+                {'success': False, 'error': 'Google sign-in is not available for staff accounts. Please use email and password.'},
                 status=status.HTTP_403_FORBIDDEN,
             )
 

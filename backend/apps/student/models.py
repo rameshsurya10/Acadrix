@@ -159,7 +159,9 @@ class Payment(models.Model):
         BANK_TRANSFER = 'bank_transfer', 'Bank Transfer'
         CREDIT_CARD = 'credit_card', 'Credit Card'
         CASH = 'cash', 'Cash'
-        PAYPAL = 'paypal', 'PayPal'
+        STRIPE = 'stripe', 'Stripe (Card)'
+        CHEQUE = 'cheque', 'Cheque'
+        OTHER = 'other', 'Other'
 
     account = models.ForeignKey(TuitionAccount, on_delete=models.CASCADE, related_name='payments')
     receipt_id = models.CharField(max_length=30, unique=True)

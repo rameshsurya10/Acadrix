@@ -36,14 +36,10 @@ class _SectionSerializer(serializers.ModelSerializer):
 # ── Core serializers ────────────────────────────────────────────────
 
 class GuardianSerializer(serializers.ModelSerializer):
-    parent_name = serializers.CharField(source='parent.full_name', read_only=True)
-    parent_email = serializers.EmailField(source='parent.email', read_only=True)
-    parent_phone = serializers.CharField(source='parent.phone', read_only=True)
-
     class Meta:
         model = Guardian
         fields = [
-            'id', 'parent', 'parent_name', 'parent_email', 'parent_phone',
+            'id', 'name', 'email', 'phone',
             'relationship', 'is_primary', 'created_at',
         ]
         read_only_fields = fields
@@ -199,11 +195,11 @@ class PaymentMethodSerializer(serializers.ModelSerializer):
     class Meta:
         model = PaymentMethod
         fields = [
-            'id', 'parent', 'method_type', 'display_name',
+            'id', 'user', 'method_type', 'display_name',
             'last_four', 'expiry', 'is_default', 'created_at',
         ]
-        read_only_fields = ['id', 'parent', 'created_at']
+        read_only_fields = ['id', 'user', 'created_at']
 
     def create(self, validated_data):
-        validated_data['parent'] = self.context['request'].user
+        validated_data['user'] = self.context['request'].user
         return super().create(validated_data)

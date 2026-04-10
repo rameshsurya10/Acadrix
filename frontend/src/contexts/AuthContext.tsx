@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { authService } from '@/services/shared/authService'
 
-export type UserRole = 'admin' | 'principal' | 'teacher' | 'student'
+export type UserRole = 'super_admin' | 'admin' | 'finance' | 'principal' | 'teacher' | 'student'
 
 export interface AuthUser {
   id: number

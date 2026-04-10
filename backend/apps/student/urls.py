@@ -17,6 +17,7 @@ router.register('payment-methods', views.PaymentMethodViewSet, basename='payment
 urlpatterns = [
     path('dashboard/', views.StudentDashboardView.as_view(), name='dashboard'),
     path('tuition/', views.TuitionAccountView.as_view(), name='tuition'),
+    path('grades/', views.StudentGradesView.as_view(), name='student-grades'),
     path('parent-dashboard/', views.ParentDashboardView.as_view(), name='parent-dashboard'),
     path('', include(router.urls)),
 ]

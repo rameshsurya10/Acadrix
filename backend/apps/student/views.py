@@ -7,6 +7,7 @@ from rest_framework.response import Response
 
 from apps.accounts.permissions import IsAdmin, IsStaff, IsStudent
 from apps.shared.models import ScheduleSlot
+from apps.teacher.models import GradeEntry
 from .models import (
     Attendance,
     Document,
@@ -57,7 +58,7 @@ class StudentProfileViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         qs = StudentProfile.objects.select_related(
             'user', 'section__grade',
-        ).prefetch_related('guardians__parent')
+        ).prefetch_related('guardians')
 
         user = self.request.user
         if user.role == 'student':
@@ -198,10 +199,13 @@ class StudentDashboardView(GenericAPIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        # Attendance stats
-        attendance_qs = Attendance.objects.filter(student=profile)
-        total_days = attendance_qs.count()
-        present_days = attendance_qs.filter(is_present=True).count()
+        # Attendance stats (single aggregate query instead of two count queries)
+        attendance_stats = Attendance.objects.filter(student=profile).aggregate(
+            total_days=Count('id'),
+            present_days=Count('id', filter=Q(is_present=True)),
+        )
+        total_days = attendance_stats['total_days']
+        present_days = attendance_stats['present_days']
         attendance_pct = (
             round((present_days / total_days) * 100, 1) if total_days else 0.0
         )
@@ -272,6 +276,46 @@ class StudentDashboardView(GenericAPIView):
         return Response({'success': True, 'data': data})
 
 
+class StudentGradesView(GenericAPIView):
+    """GET /api/v1/student/grades/ -- returns the authenticated student's grade entries."""
+    permission_classes = [IsAuthenticated, IsStudent]
+
+    def get(self, request):
+        try:
+            profile = _get_student_profile(request.user)
+        except StudentProfile.DoesNotExist:
+            return Response(
+                {'success': False, 'error': 'Student profile not found.'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        grade_entries = (
+            GradeEntry.objects
+            .filter(student=profile)
+            .select_related(
+                'assessment__subject',
+                'assessment__course__section',
+            )
+            .order_by('-graded_at')
+        )
+
+        data = [
+            {
+                'assessment_title': entry.assessment.title,
+                'subject_name': entry.assessment.subject.name,
+                'section': str(entry.assessment.course.section) if entry.assessment.course else None,
+                'marks_obtained': str(entry.marks_obtained),
+                'total_marks': entry.assessment.total_marks,
+                'letter_grade': entry.letter_grade,
+                'remarks': entry.remarks,
+                'graded_at': entry.graded_at.isoformat() if entry.graded_at else None,
+            }
+            for entry in grade_entries
+        ]
+
+        return Response({'success': True, 'data': data})
+
+
 # ── Parent endpoints (merged into student app) ─────────────────────
 
 class PaymentMethodViewSet(viewsets.ModelViewSet):
@@ -281,7 +325,7 @@ class PaymentMethodViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
 
     def get_queryset(self):
-        return PaymentMethod.objects.filter(parent=self.request.user)
+        return PaymentMethod.objects.filter(user=self.request.user)
 
 
 class ParentDashboardView(GenericAPIView):
@@ -293,9 +337,11 @@ class ParentDashboardView(GenericAPIView):
 
     def get(self, request):
         guardianships = Guardian.objects.filter(
-            parent=request.user,
+            email=request.user.email,
         ).select_related(
-            'student__user', 'student__section__grade', 'student__tuition_account',
+            'student__user', 'student__section__grade',
+        ).prefetch_related(
+            'student__tuition_account',  # reverse OneToOne needs prefetch, not select_related
         )
 
         students_data = []

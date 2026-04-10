@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from .models import (
+    AcademicYear,
     Conversation,
     Course,
     Department,
@@ -10,6 +11,13 @@ from .models import (
     Section,
     Subject,
 )
+
+
+class AcademicYearSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AcademicYear
+        fields = ['id', 'label', 'start_date', 'end_date', 'is_current', 'created_at']
+        read_only_fields = ['id', 'created_at']
 
 
 class DepartmentSerializer(serializers.ModelSerializer):

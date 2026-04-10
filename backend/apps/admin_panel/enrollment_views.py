@@ -2,7 +2,7 @@ from rest_framework import status
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 
-from apps.accounts.permissions import IsAdmin, IsAdminOrPrincipal
+from apps.accounts.permissions import IsSuperAdmin, IsSuperAdminOrAdmin, IsAdminOrPrincipal
 from apps.accounts.serializers import UserSerializer
 
 from .enrollment_serializers import (
@@ -52,7 +52,7 @@ class EnrollStudentView(GenericAPIView):
 
 
 class EnrollPrincipalView(GenericAPIView):
-    permission_classes = [IsAdmin]
+    permission_classes = [IsSuperAdminOrAdmin]
     serializer_class = EnrollPrincipalSerializer
 
     def post(self, request):
@@ -71,7 +71,7 @@ class EnrollPrincipalView(GenericAPIView):
 
 
 class EnrollAdminView(GenericAPIView):
-    permission_classes = [IsAdmin]
+    permission_classes = [IsSuperAdmin]
     serializer_class = EnrollAdminSerializer
 
     def post(self, request):

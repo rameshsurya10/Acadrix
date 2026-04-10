@@ -14,6 +14,8 @@ export default function StudentsPage() {
   const [page, setPage] = useState(1)
   const [grades, setGrades] = useState<{ id: number; level: number; label: string }[]>([])
   const [gradeFilter, setGradeFilter] = useState('')
+  const [expandedId, setExpandedId] = useState<number | null>(null)
+  const [expandedTab, setExpandedTab] = useState<'profile' | 'documents'>('profile')
 
   const fetchStudents = useCallback(async (pageNum: number, append = false) => {
     try {
@@ -126,49 +128,161 @@ export default function StudentsPage() {
               </p>
             </div>
           ) : (
-            students.map(s => (
-              <div key={s.id} className="group bg-surface-container-lowest hover:bg-surface-container-high transition-colors p-4 md:p-5 rounded-xl flex flex-col lg:flex-row lg:items-center justify-between gap-4 md:gap-6">
-                <div className="flex items-center gap-4 md:gap-5">
-                  {s.avatar_url ? (
-                    <img src={s.avatar_url} alt={s.full_name} className="w-12 h-12 md:w-14 md:h-14 rounded-lg object-cover" />
-                  ) : (
-                    <div className="w-12 h-12 md:w-14 md:h-14 rounded-lg bg-surface-container-low flex items-center justify-center font-bold text-on-surface-variant">
-                      {getInitials(s.full_name)}
+            students.map(s => {
+              const isExpanded = expandedId === s.id
+              return (
+                <div key={s.id} className="bg-surface-container-lowest rounded-xl overflow-hidden transition-all">
+                  <div className="group hover:bg-surface-container-high transition-colors p-4 md:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 md:gap-6">
+                    <div className="flex items-center gap-4 md:gap-5">
+                      {s.avatar_url ? (
+                        <img src={s.avatar_url} alt={s.full_name} className="w-12 h-12 md:w-14 md:h-14 rounded-lg object-cover" />
+                      ) : (
+                        <div className="w-12 h-12 md:w-14 md:h-14 rounded-lg bg-surface-container-low flex items-center justify-center font-bold text-on-surface-variant">
+                          {getInitials(s.full_name)}
+                        </div>
+                      )}
+                      <div>
+                        <h3 className="font-headline font-bold text-base md:text-lg text-on-surface">{s.full_name}</h3>
+                        <p className="text-xs text-on-surface-variant font-medium">ID: {s.student_id}</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-8 flex-grow max-w-2xl">
+                      <div>
+                        <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant mb-1">Grade / Sec</p>
+                        <p className="font-semibold text-sm">{getSectionLabel(s)}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant mb-1">Enrolled</p>
+                        <p className="font-medium text-sm text-on-surface-variant">
+                          {s.enrollment_date ? new Date(s.enrollment_date).toLocaleDateString() : '—'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant mb-1">Guardian</p>
+                        <p className="font-medium text-xs text-on-surface">
+                          {s.guardians.length > 0 ? s.guardians[0].name || s.guardians[0].relationship : 'None'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 lg:border-l border-outline-variant/20 lg:pl-6">
+                      <button
+                        onClick={() => {
+                          if (isExpanded && expandedTab === 'profile') {
+                            setExpandedId(null)
+                          } else {
+                            setExpandedId(s.id)
+                            setExpandedTab('profile')
+                          }
+                        }}
+                        className={`p-2 transition-colors ${isExpanded && expandedTab === 'profile' ? 'text-primary' : 'text-on-surface-variant hover:text-primary'}`}
+                        title="View Profile"
+                      >
+                        <span className="material-symbols-outlined">account_circle</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (isExpanded && expandedTab === 'documents') {
+                            setExpandedId(null)
+                          } else {
+                            setExpandedId(s.id)
+                            setExpandedTab('documents')
+                          }
+                        }}
+                        className={`p-2 transition-colors ${isExpanded && expandedTab === 'documents' ? 'text-primary' : 'text-on-surface-variant hover:text-primary'}`}
+                        title="Documents"
+                      >
+                        <span className="material-symbols-outlined">folder_open</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Expandable Detail Panel */}
+                  {isExpanded && (
+                    <div className="border-t border-outline-variant/10 bg-surface-container-low p-4 md:p-6 animate-[fadeIn_0.15s_ease-in]">
+                      {expandedTab === 'profile' ? (
+                        <div>
+                          <h4 className="font-label text-xs uppercase tracking-widest font-bold text-on-surface-variant mb-4">Student Profile</h4>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div>
+                              <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant mb-1">Full Name</p>
+                              <p className="text-sm font-medium text-on-surface">{s.full_name}</p>
+                            </div>
+                            <div>
+                              <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant mb-1">Email</p>
+                              <p className="text-sm font-medium text-on-surface">{s.email || '—'}</p>
+                            </div>
+                            <div>
+                              <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant mb-1">Student ID</p>
+                              <p className="text-sm font-medium text-on-surface">{s.student_id}</p>
+                            </div>
+                            <div>
+                              <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant mb-1">Section</p>
+                              <p className="text-sm font-medium text-on-surface">{getSectionLabel(s)}</p>
+                            </div>
+                            <div>
+                              <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant mb-1">House</p>
+                              <p className="text-sm font-medium text-on-surface">{s.house || '—'}</p>
+                            </div>
+                            <div>
+                              <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant mb-1">Date of Birth</p>
+                              <p className="text-sm font-medium text-on-surface">
+                                {s.date_of_birth ? new Date(s.date_of_birth).toLocaleDateString() : '—'}
+                              </p>
+                            </div>
+                            <div className="sm:col-span-2">
+                              <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant mb-1">Address</p>
+                              <p className="text-sm font-medium text-on-surface">{s.address || '—'}</p>
+                            </div>
+                            <div>
+                              <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant mb-1">Enrollment Date</p>
+                              <p className="text-sm font-medium text-on-surface">
+                                {s.enrollment_date ? new Date(s.enrollment_date).toLocaleDateString() : '—'}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Guardians */}
+                          {s.guardians.length > 0 && (
+                            <div className="mt-6">
+                              <h4 className="font-label text-xs uppercase tracking-widest font-bold text-on-surface-variant mb-3">Guardians</h4>
+                              <div className="space-y-3">
+                                {s.guardians.map(g => (
+                                  <div key={g.id} className="bg-surface-container-lowest rounded-lg p-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6">
+                                    <div className="flex items-center gap-2">
+                                      <span className="material-symbols-outlined text-sm text-primary">family_restroom</span>
+                                      <span className="text-sm font-semibold text-on-surface">{g.name || 'Unnamed'}</span>
+                                      {g.relationship && (
+                                        <span className="text-xs bg-tertiary/10 text-tertiary px-2 py-0.5 rounded-full font-medium">{g.relationship}</span>
+                                      )}
+                                      {g.is_primary && (
+                                        <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">Primary</span>
+                                      )}
+                                    </div>
+                                    <div className="flex gap-4 text-xs text-on-surface-variant">
+                                      {g.email && <span>{g.email}</span>}
+                                      {g.phone && <span>{g.phone}</span>}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div>
+                          <h4 className="font-label text-xs uppercase tracking-widest font-bold text-on-surface-variant mb-4">Documents</h4>
+                          <div className="bg-surface-container-lowest rounded-lg p-6 text-center">
+                            <span className="material-symbols-outlined text-3xl text-on-surface-variant mb-2 block">folder_open</span>
+                            <p className="text-sm text-on-surface-variant font-medium">Document management coming soon.</p>
+                            <p className="text-xs text-on-surface-variant mt-1">Upload, view, and manage student documents in a future update.</p>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
-                  <div>
-                    <h3 className="font-headline font-bold text-base md:text-lg text-on-surface">{s.full_name}</h3>
-                    <p className="text-xs text-on-surface-variant font-medium">ID: {s.student_id}</p>
-                  </div>
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-8 flex-grow max-w-2xl">
-                  <div>
-                    <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant mb-1">Grade / Sec</p>
-                    <p className="font-semibold text-sm">{getSectionLabel(s)}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant mb-1">Enrolled</p>
-                    <p className="font-medium text-sm text-on-surface-variant">
-                      {s.enrollment_date ? new Date(s.enrollment_date).toLocaleDateString() : '—'}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant mb-1">Guardian</p>
-                    <p className="font-medium text-xs text-on-surface">
-                      {s.guardians.length > 0 ? s.guardians[0].parent_name || s.guardians[0].relationship : 'None'}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 lg:border-l border-outline-variant/20 lg:pl-6">
-                  <button className="p-2 text-on-surface-variant hover:text-primary transition-colors" title="View Profile">
-                    <span className="material-symbols-outlined">account_circle</span>
-                  </button>
-                  <button className="p-2 text-on-surface-variant hover:text-primary transition-colors" title="Documents">
-                    <span className="material-symbols-outlined">folder_open</span>
-                  </button>
-                </div>
-              </div>
-            ))
+              )
+            })
           )}
         </div>
 

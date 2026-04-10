@@ -99,6 +99,78 @@ class AdminNotification(models.Model):
         ordering = ['-created_at']
 
 
+class FeeTemplate(models.Model):
+    """Reusable fee structure per grade. Auto-applied when students enroll."""
+    grade = models.OneToOneField(
+        'shared.Grade', on_delete=models.CASCADE, related_name='fee_template',
+    )
+    name = models.CharField(max_length=120)
+    academic_year = models.ForeignKey(
+        'shared.AcademicYear', on_delete=models.CASCADE, related_name='fee_templates',
+    )
+    due_date = models.DateField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'fee_templates'
+        unique_together = ['grade', 'academic_year']
+
+    def __str__(self):
+        return f'{self.name} ({self.grade.label})'
+
+    @property
+    def total_amount(self):
+        return sum(item.amount for item in self.items.all())
+
+
+class FeeTemplateItem(models.Model):
+    """Individual fee line in a template (e.g. Tuition, Lab Fee, Activity Fee)."""
+    template = models.ForeignKey(FeeTemplate, on_delete=models.CASCADE, related_name='items')
+    description = models.CharField(max_length=200)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    is_optional = models.BooleanField(default=False)
+    order = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        db_table = 'fee_template_items'
+        ordering = ['order', 'id']
+
+    def __str__(self):
+        return f'{self.description}: ₹{self.amount}'
+
+
+class StudentDiscount(models.Model):
+    """Per-student scholarship/discount. Only affects this student, not the template."""
+
+    class DiscountType(models.TextChoices):
+        SCHOLARSHIP = 'scholarship', 'Scholarship'
+        SIBLING = 'sibling', 'Sibling Discount'
+        MERIT = 'merit', 'Merit Award'
+        FINANCIAL_AID = 'financial_aid', 'Financial Aid'
+        STAFF_CHILD = 'staff_child', 'Staff Child'
+        OTHER = 'other', 'Other'
+
+    student = models.ForeignKey(
+        'student.StudentProfile', on_delete=models.CASCADE, related_name='discounts',
+    )
+    discount_type = models.CharField(max_length=20, choices=DiscountType.choices)
+    description = models.CharField(max_length=200)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    applied_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'student_discounts'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.discount_type}: -₹{self.amount} for {self.student}'
+
+
 class IDConfiguration(models.Model):
     """Admin-configurable ID prefixes per role."""
     ROLE_CHOICES = [

@@ -1,9 +1,15 @@
-from django.db.models import Avg, Count
-from rest_framework import status, viewsets
+from datetime import date
+
+from django.db import transaction
+from django.db.models import Avg, Count, Q
+from rest_framework import serializers, status, viewsets
+from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsTeacher
+from apps.shared.models import Course
+from apps.student.models import Attendance, StudentProfile
 from apps.teacher.models import (
     Assessment,
     Assignment,
@@ -349,62 +355,236 @@ class TeacherDashboardView(APIView):
     def get(self, request):
         user = request.user
 
-        assignment_count = Assignment.objects.filter(teacher=user).count()
-        active_assignments = Assignment.objects.filter(
-            teacher=user, status=Assignment.Status.ACTIVE,
-        ).count()
+        # Assignments: combine total + active into one query (was 2)
+        assignment_stats = Assignment.objects.filter(teacher=user).aggregate(
+            total=Count('id'),
+            active=Count('id', filter=Q(status=Assignment.Status.ACTIVE)),
+        )
 
-        assessment_count = Assessment.objects.filter(teacher=user).count()
-        assessment_status_breakdown = dict(
+        # Assessments: combine total + status breakdown into one query (was 2)
+        assessment_status_qs = (
             Assessment.objects.filter(teacher=user)
-            .values_list('status')
+            .values('status')
             .annotate(count=Count('id'))
-            .order_by('status'),
+        )
+        assessment_status_breakdown = {
+            row['status']: row['count'] for row in assessment_status_qs
+        }
+        assessment_total = sum(assessment_status_breakdown.values())
+
+        # Grade entries: combine count + avg into one query (was 2)
+        grade_stats = GradeEntry.objects.filter(
+            assessment__teacher=user,
+        ).aggregate(
+            total_students=Count('student', distinct=True),
+            average_score=Avg('marks_obtained'),
         )
 
-        total_students_graded = (
-            GradeEntry.objects.filter(assessment__teacher=user)
-            .values('student')
-            .distinct()
-            .count()
-        )
-
-        avg_score = (
-            GradeEntry.objects.filter(assessment__teacher=user).aggregate(
-                avg=Avg('marks_obtained'),
-            )['avg']
-        )
-
-        health_observation_count = HealthObservation.objects.filter(
+        # Health: combine total + students into one query (was 2)
+        health_stats = HealthObservation.objects.filter(
             teacher=user,
-        ).count()
-
-        students_with_observations = (
-            HealthObservation.objects.filter(teacher=user)
-            .values('student')
-            .distinct()
-            .count()
+        ).aggregate(
+            total=Count('id'),
+            students_observed=Count('student', distinct=True),
         )
+
+        avg_score = grade_stats['average_score']
 
         data = {
             'assignments': {
-                'total': assignment_count,
-                'active': active_assignments,
+                'total': assignment_stats['total'],
+                'active': assignment_stats['active'],
             },
             'assessments': {
-                'total': assessment_count,
+                'total': assessment_total,
                 'by_status': assessment_status_breakdown,
             },
             'grading': {
-                'total_students_graded': total_students_graded,
+                'total_students_graded': grade_stats['total_students'],
                 'average_score': (
                     round(float(avg_score), 2) if avg_score else None
                 ),
             },
             'health': {
-                'total_observations': health_observation_count,
-                'students_observed': students_with_observations,
+                'total_observations': health_stats['total'],
+                'students_observed': health_stats['students_observed'],
             },
         }
 
         return Response({'success': True, 'data': data})
+
+
+# ── Attendance serializers (inline, thin) ──────────────────────────
+
+class _AttendanceRecordSerializer(serializers.Serializer):
+    """Validates a single attendance record inside the bulk payload."""
+    student_id = serializers.IntegerField()
+    is_present = serializers.BooleanField()
+    remarks = serializers.CharField(required=False, allow_blank=True, default='')
+
+
+class _BulkAttendanceSerializer(serializers.Serializer):
+    """Validates the top-level bulk attendance request body."""
+    section_id = serializers.IntegerField()
+    date = serializers.DateField()
+    records = _AttendanceRecordSerializer(many=True, allow_empty=False)
+
+
+# ── Attendance Views ───────────────────────────────────────────────
+
+class BulkMarkAttendanceView(GenericAPIView):
+    """
+    POST /api/v1/teacher/attendance/bulk-mark/
+    Accepts a section_id, date, and list of attendance records.
+    Creates or updates Attendance rows for each student.
+    """
+    permission_classes = [IsTeacher]
+    serializer_class = _BulkAttendanceSerializer
+
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        section_id = data['section_id']
+        att_date = data['date']
+        records = data['records']
+
+        # Verify teacher teaches a course in this section
+        has_course = Course.objects.filter(
+            section_id=section_id,
+            teacher=request.user,
+        ).exists()
+        if not has_course:
+            return Response(
+                {
+                    'success': False,
+                    'error': 'You do not teach any course in this section.',
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        # Validate all student_ids belong to this section
+        student_ids = [r['student_id'] for r in records]
+        valid_profiles = StudentProfile.objects.filter(
+            id__in=student_ids,
+            section_id=section_id,
+            is_active=True,
+        ).values_list('id', flat=True)
+        valid_set = set(valid_profiles)
+
+        invalid_ids = [sid for sid in student_ids if sid not in valid_set]
+        if invalid_ids:
+            return Response(
+                {
+                    'success': False,
+                    'error': f'Invalid or mismatched student IDs for this section: {invalid_ids}',
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        created_count = 0
+        updated_count = 0
+
+        with transaction.atomic():
+            for record in records:
+                _, created = Attendance.objects.update_or_create(
+                    student_id=record['student_id'],
+                    date=att_date,
+                    defaults={
+                        'is_present': record['is_present'],
+                        'remarks': record.get('remarks', ''),
+                    },
+                )
+                if created:
+                    created_count += 1
+                else:
+                    updated_count += 1
+
+        return Response(
+            {
+                'success': True,
+                'data': {
+                    'created': created_count,
+                    'updated': updated_count,
+                    'total': created_count + updated_count,
+                },
+                'message': f'Attendance marked for {created_count + updated_count} students.',
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class TeacherAttendanceView(GenericAPIView):
+    """
+    GET /api/v1/teacher/attendance/?section_id=&date=
+    Returns attendance records for a section on a given date.
+    Only accessible if the teacher teaches a course in the section.
+    """
+    permission_classes = [IsTeacher]
+
+    def get(self, request):
+        section_id = request.query_params.get('section_id')
+        att_date = request.query_params.get('date')
+
+        if not section_id or not att_date:
+            return Response(
+                {
+                    'success': False,
+                    'error': 'Both section_id and date query parameters are required.',
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            section_id = int(section_id)
+        except (TypeError, ValueError):
+            return Response(
+                {'success': False, 'error': 'section_id must be an integer.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            att_date = date.fromisoformat(att_date)
+        except (TypeError, ValueError):
+            return Response(
+                {'success': False, 'error': 'date must be in YYYY-MM-DD format.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Verify teacher teaches a course in this section
+        has_course = Course.objects.filter(
+            section_id=section_id,
+            teacher=request.user,
+        ).exists()
+        if not has_course:
+            return Response(
+                {
+                    'success': False,
+                    'error': 'You do not teach any course in this section.',
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        records = (
+            Attendance.objects
+            .filter(student__section_id=section_id, date=att_date)
+            .select_related('student__user')
+            .order_by('student__user__first_name', 'student__user__last_name')
+        )
+
+        data = [
+            {
+                'student_id': r.student_id,
+                'student_name': r.student.user.full_name,
+                'is_present': r.is_present,
+                'remarks': r.remarks,
+            }
+            for r in records
+        ]
+
+        return Response({
+            'success': True,
+            'data': data,
+            'total': len(data),
+        })

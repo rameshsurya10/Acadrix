@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import PageLayout from '@/components/layout/PageLayout'
-import { adminService, type TuitionAccountItem, type FinanceStats } from '@/services/admin/adminService'
+import { adminService, type TuitionAccountItem, type FinanceStats, type RecordPaymentResponse } from '@/services/admin/adminService'
 import { SkeletonMetricCard, SkeletonTableRow } from '@/components/shared/Skeleton'
 
 const STATUS_BADGES: Record<string, { label: string; bg: string; text: string }> = {
@@ -24,25 +24,70 @@ export default function FinancePage() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
 
-  useEffect(() => {
-    async function load() {
-      setLoading(true)
-      try {
-        const params: Record<string, string> = { page: String(pagination.page), page_size: '25' }
-        if (search) params.search = search
-        if (statusFilter) params.status = statusFilter
-        const result = await adminService.getFinanceOverview(params)
-        setAccounts(result.data)
-        setStats(result.stats)
-        setPagination(result.pagination)
-      } catch (err) {
-        console.error('Failed to load finance:', err)
-      } finally {
-        setLoading(false)
-      }
+  // Record Payment state
+  const [showPaymentForm, setShowPaymentForm] = useState(false)
+  const [payStudentId, setPayStudentId] = useState<number | ''>('')
+  const [payAmount, setPayAmount] = useState('')
+  const [payMethod, setPayMethod] = useState('')
+  const [payNotes, setPayNotes] = useState('')
+  const [paySaving, setPaySaving] = useState(false)
+  const [payFormError, setPayFormError] = useState('')
+  const [payReceipt, setPayReceipt] = useState<RecordPaymentResponse | null>(null)
+
+  const loadFinance = useCallback(async () => {
+    setLoading(true)
+    try {
+      const params: Record<string, string> = { page: String(pagination.page), page_size: '25' }
+      if (search) params.search = search
+      if (statusFilter) params.status = statusFilter
+      const result = await adminService.getFinanceOverview(params)
+      setAccounts(result.data)
+      setStats(result.stats)
+      setPagination(result.pagination)
+    } catch (err) {
+      console.error('Failed to load finance:', err)
+    } finally {
+      setLoading(false)
     }
-    load()
   }, [search, statusFilter, pagination.page])
+
+  useEffect(() => {
+    loadFinance()
+  }, [loadFinance])
+
+  function resetPaymentForm() {
+    setShowPaymentForm(false)
+    setPayStudentId('')
+    setPayAmount('')
+    setPayMethod('')
+    setPayNotes('')
+    setPayFormError('')
+  }
+
+  async function handleRecordPayment() {
+    if (!payStudentId) { setPayFormError('Please select a student.'); return }
+    if (!payAmount || parseFloat(payAmount) <= 0) { setPayFormError('Please enter a valid amount.'); return }
+    if (!payMethod) { setPayFormError('Please select a payment method.'); return }
+
+    setPaySaving(true)
+    setPayFormError('')
+    try {
+      const res = await adminService.recordPayment({
+        student_id: Number(payStudentId),
+        amount: parseFloat(payAmount),
+        method: payMethod,
+        notes: payNotes.trim() || undefined,
+      })
+      setPayReceipt(res.data)
+      resetPaymentForm()
+      loadFinance()
+      setTimeout(() => setPayReceipt(null), 8000)
+    } catch {
+      setPayFormError('Failed to record payment. Please try again.')
+    } finally {
+      setPaySaving(false)
+    }
+  }
 
   function goPage(dir: number) {
     setPagination(prev => ({ ...prev, page: prev.page + dir }))
@@ -124,6 +169,14 @@ export default function FinancePage() {
           )}
         </div>
 
+        {/* Payment Receipt Banner */}
+        {payReceipt && (
+          <div className="mb-6 px-5 py-3 rounded-lg flex items-center gap-3 text-sm font-medium bg-tertiary/10 text-tertiary">
+            <span className="material-symbols-outlined text-lg">check_circle</span>
+            Payment recorded successfully. Receipt ID: <strong>{payReceipt.receipt_id}</strong> &mdash; {formatCurrency(payReceipt.amount)} via {payReceipt.method}
+          </div>
+        )}
+
         {/* Search & Filter */}
         <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 md:gap-6 mb-6 md:mb-8">
           <div className="w-full md:w-96 relative">
@@ -148,8 +201,102 @@ export default function FinancePage() {
               <option value="pending">Pending</option>
               <option value="partial">Partial</option>
             </select>
+            <button
+              onClick={() => { setShowPaymentForm(f => !f); setPayFormError('') }}
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-on-primary rounded-lg font-semibold text-sm hover:opacity-90 transition-opacity whitespace-nowrap"
+            >
+              <span className="material-symbols-outlined text-lg">add_card</span>
+              Record Payment
+            </button>
           </div>
         </div>
+
+        {/* Record Payment Form */}
+        {showPaymentForm && (
+          <div className="bg-surface-container-lowest rounded-xl p-6 mb-6 border border-outline-variant/10">
+            <h4 className="font-headline text-lg font-bold text-on-surface mb-5">Record Payment</h4>
+            {payFormError && (
+              <p className="mb-4 text-sm text-error font-medium">{payFormError}</p>
+            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
+              <div>
+                <label className="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5">
+                  Student
+                </label>
+                <select
+                  value={payStudentId}
+                  onChange={e => setPayStudentId(e.target.value ? Number(e.target.value) : '')}
+                  className="w-full px-4 py-2.5 bg-surface-container-low border-none rounded-lg text-sm text-on-surface focus:ring-2 focus:ring-primary/20 cursor-pointer"
+                >
+                  <option value="">Select student</option>
+                  {accounts.map(a => (
+                    <option key={a.id} value={a.id}>
+                      {a.student_name} ({a.student_id})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5">
+                  Amount ($)
+                </label>
+                <input
+                  type="number"
+                  value={payAmount}
+                  onChange={e => setPayAmount(e.target.value)}
+                  placeholder="0.00"
+                  min="0"
+                  step="0.01"
+                  className="w-full px-4 py-2.5 bg-surface-container-low border-none rounded-lg text-sm text-on-surface placeholder:text-outline-variant focus:ring-2 focus:ring-primary/20"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5">
+                  Payment Method
+                </label>
+                <select
+                  value={payMethod}
+                  onChange={e => setPayMethod(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-surface-container-low border-none rounded-lg text-sm text-on-surface focus:ring-2 focus:ring-primary/20 cursor-pointer"
+                >
+                  <option value="">Select method</option>
+                  <option value="bank_transfer">Bank Transfer</option>
+                  <option value="credit_card">Credit Card</option>
+                  <option value="cash">Cash</option>
+                  <option value="cheque">Cheque</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5">
+                  Notes (optional)
+                </label>
+                <textarea
+                  value={payNotes}
+                  onChange={e => setPayNotes(e.target.value)}
+                  placeholder="Additional notes..."
+                  rows={1}
+                  className="w-full px-4 py-2.5 bg-surface-container-low border-none rounded-lg text-sm text-on-surface placeholder:text-outline-variant focus:ring-2 focus:ring-primary/20 resize-none"
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleRecordPayment}
+                disabled={paySaving}
+                className="px-6 py-2.5 bg-primary text-on-primary rounded-lg font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
+              >
+                {paySaving ? 'Processing...' : 'Record Payment'}
+              </button>
+              <button
+                onClick={resetPaymentForm}
+                className="px-5 py-2.5 bg-surface-container-high text-on-surface rounded-lg font-semibold text-sm hover:opacity-80 transition-opacity"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Accounts Table */}
         <div className="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm">
