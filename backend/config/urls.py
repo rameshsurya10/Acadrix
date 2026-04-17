@@ -2,6 +2,8 @@ from django.conf import settings
 from django.contrib import admin
 from django.urls import path, include
 
+from apps.student.razorpay_views import RazorpayWebhookView
+
 urlpatterns = [
     path('django-admin/', admin.site.urls),
 
@@ -18,6 +20,9 @@ urlpatterns = [
     path('api/v1/leave/',     include('apps.leave.urls')),
     path('api/v1/hr/',        include('apps.hr.urls')),
     path('api/v1/udise/',     include('apps.udise.urls')),
+
+    # Webhooks (AllowAny + signature-verified)
+    path('api/v1/webhooks/razorpay/', RazorpayWebhookView.as_view(), name='razorpay-webhook'),
 ]
 
 # OpenAPI docs — only available in DEBUG mode

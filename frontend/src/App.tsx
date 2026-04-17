@@ -1,6 +1,19 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { QueryClientProvider } from '@tanstack/react-query'
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { AuthProvider, useAuth, UserRole } from '@/contexts/AuthContext'
 import ProtectedRoute from '@/components/shared/ProtectedRoute'
+import PWAUpdatePrompt from '@/components/shared/PWAUpdatePrompt'
+import ErrorBoundary from '@/components/shared/ErrorBoundary'
+import { queryClient } from '@/lib/queryClient'
+import type { ReactNode } from 'react'
+
+/** Wraps its children in an ErrorBoundary keyed on the current pathname,
+ * so navigating away from a crashed page automatically clears the error. */
+function RoutedErrorBoundary({ children }: { children: ReactNode }) {
+  const { pathname } = useLocation()
+  return <ErrorBoundary resetKey={pathname}>{children}</ErrorBoundary>
+}
 
 const ROLE_HOME: Record<UserRole, string> = {
   super_admin: '/super-admin/dashboard',
@@ -130,9 +143,11 @@ import Timetable from '@/pages/shared/TimetablePage'
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <Routes>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <AuthProvider>
+          <RoutedErrorBoundary>
+          <Routes>
           {/* Public */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
@@ -234,8 +249,12 @@ export default function App() {
           <Route path="/timetable" element={<ProtectedRoute role="any" />}>
             <Route index element={<Timetable />} />
           </Route>
-        </Routes>
-      </AuthProvider>
-    </BrowserRouter>
+          </Routes>
+          </RoutedErrorBoundary>
+        </AuthProvider>
+      </BrowserRouter>
+      <PWAUpdatePrompt />
+      {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-right" />}
+    </QueryClientProvider>
   )
 }

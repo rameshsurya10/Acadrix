@@ -164,4 +164,20 @@ export const academicsService = {
     const { data } = await api.get('/academics/my/certificates/')
     return data.results ?? data.data ?? data
   },
+
+  // ── PDF Downloads ──────────────────────────────────────────────────
+
+  async downloadReportCardPdf(reportCardId: number): Promise<Blob> {
+    const response = await api.get(`/academics/report-cards/${reportCardId}/pdf/`, {
+      responseType: 'blob',
+    })
+    return response.data as Blob
+  },
+
+  async downloadCertificatePdf(certificateId: number): Promise<Blob> {
+    const response = await api.get(`/academics/certificates/${certificateId}/pdf/`, {
+      responseType: 'blob',
+    })
+    return response.data as Blob
+  },
 }

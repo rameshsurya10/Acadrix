@@ -17,8 +17,13 @@ from .serializers import (
     VerifyOTPSerializer, SetPasswordSerializer,
     ForgotPasswordSerializer, ResetPasswordSerializer,
     TourProgressSerializer,
+    ParentRequestOTPSerializer, ParentVerifyOTPSerializer,
 )
-from .utils import generate_otp, send_otp_email, mask_email
+from .tasks import send_otp_email_task, send_otp_sms_task
+from .utils import (
+    generate_otp, mask_email,
+    generate_otp_for_phone, normalize_phone, mask_phone,
+)
 
 
 class LoginThrottle(AnonRateThrottle):
@@ -79,7 +84,7 @@ class IdentifyView(GenericAPIView):
 
         try:
             otp = generate_otp(email, 'login')
-            send_otp_email(otp)
+            send_otp_email_task.delay(otp.id)
         except ValueError as e:
             return Response(
                 {'success': False, 'error': str(e)},
@@ -228,7 +233,7 @@ class ForgotPasswordView(GenericAPIView):
 
         try:
             otp = generate_otp(email, 'forgot_password')
-            send_otp_email(otp)
+            send_otp_email_task.delay(otp.id)
         except ValueError as e:
             return Response(
                 {'success': False, 'error': str(e)},
@@ -444,6 +449,181 @@ class GoogleOAuthCallbackView(GenericAPIView):
             return None
 
         return userinfo_response.json().get('email')
+
+
+class ParentRequestOTPView(GenericAPIView):
+    """POST /api/v1/auth/parent/request-otp/
+
+    Parent enters their phone. We look up Guardian records with this phone,
+    confirm at least one active student is linked, then send OTP via SMS.
+    """
+    permission_classes = [AllowAny]
+    throttle_classes = [OTPThrottle]
+    serializer_class = ParentRequestOTPSerializer
+
+    def post(self, request):
+        from apps.student.models import Guardian
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        phone = normalize_phone(serializer.validated_data['phone'])
+
+        if len(phone) != 10:
+            return Response(
+                {'success': False, 'error': 'Enter a valid 10-digit Indian mobile number.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        child_count = (
+            Guardian.objects
+            .filter(
+                phone=phone,
+                student__is_active=True,
+                student__user__is_active=True,
+            )
+            .count()
+        )
+
+        if child_count == 0:
+            return Response(
+                {'success': False, 'error': 'No student found linked to this number. Contact your school.'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        try:
+            otp = generate_otp_for_phone(phone, 'login')
+            send_otp_sms_task.delay(otp.id)
+        except ValueError as e:
+            return Response(
+                {'success': False, 'error': str(e)},
+                status=status.HTTP_429_TOO_MANY_REQUESTS,
+            )
+
+        return Response({
+            'success': True,
+            'data': {
+                'method': 'otp',
+                'masked_phone': mask_phone(phone),
+                'child_count': child_count,
+            },
+        })
+
+
+class ParentVerifyOTPView(GenericAPIView):
+    """POST /api/v1/auth/parent/verify-otp/
+
+    Verify the SMS OTP and return JWT tokens for the student account.
+    - 1 child linked      -> log in directly
+    - N children linked   -> first call returns child selection list
+                              second call (with child_id) returns tokens
+    """
+    permission_classes = [AllowAny]
+    throttle_classes = [OTPThrottle]
+    serializer_class = ParentVerifyOTPSerializer
+
+    def post(self, request):
+        from apps.student.models import Guardian
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        phone = normalize_phone(serializer.validated_data['phone'])
+        code = serializer.validated_data['otp']
+        child_id = serializer.validated_data.get('child_id')
+
+        otp = (
+            OTP.objects
+            .filter(phone=phone, purpose='login', is_used=False)
+            .order_by('-created_at')
+            .first()
+        )
+
+        if not otp or not otp.is_valid:
+            return Response(
+                {'success': False, 'error': 'OTP has expired or is invalid. Please request a new one.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if otp.code != code:
+            otp.attempts += 1
+            otp.save(update_fields=['attempts'])
+            remaining = 5 - otp.attempts
+            if remaining <= 0:
+                otp.is_used = True
+                otp.save(update_fields=['is_used'])
+                return Response(
+                    {'success': False, 'error': 'Too many incorrect attempts. Please request a new OTP.'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            return Response(
+                {'success': False, 'error': f'Incorrect OTP. {remaining} attempts remaining.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        guardians = (
+            Guardian.objects
+            .filter(
+                phone=phone,
+                student__is_active=True,
+                student__user__is_active=True,
+            )
+            .select_related('student__user', 'student__section')
+            .order_by('-is_primary', 'student__user__first_name')
+        )
+
+        children = [
+            {
+                'student_user_id': g.student.user.id,
+                'student_id': g.student.student_id,
+                'name': g.student.user.full_name,
+                'section': str(g.student.section) if g.student.section else None,
+            }
+            for g in guardians
+        ]
+
+        if not children:
+            return Response(
+                {'success': False, 'error': 'No children found for this number.'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Multi-child, no selection yet -> return picker (don't burn the OTP)
+        if len(children) > 1 and not child_id:
+            return Response({
+                'success': True,
+                'requires_child_selection': True,
+                'children': children,
+            })
+
+        # Pick the target student user
+        if child_id:
+            valid_ids = {c['student_user_id'] for c in children}
+            if child_id not in valid_ids:
+                return Response(
+                    {'success': False, 'error': 'Invalid child selection.'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            target_user_id = child_id
+        else:
+            target_user_id = children[0]['student_user_id']
+
+        user = User.objects.filter(id=target_user_id, is_active=True).first()
+        if not user:
+            return Response(
+                {'success': False, 'error': 'Student account not found.'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        otp.is_used = True
+        otp.save(update_fields=['is_used'])
+
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            'success': True,
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
+            'user': UserSerializer(user, context={'request': request}).data,
+            'is_parent_session': True,
+        })
 
 
 class TourProgressView(GenericAPIView):

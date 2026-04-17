@@ -115,6 +115,13 @@ export default function QuestionGeneratorPage() {
   const [uploadError, setUploadError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  // Phase 3.1: subject picker + AI generation fields
+  const [subjectOptions, setSubjectOptions] = useState<{ id: number; name: string }[]>([])
+  const [selectedSubjectId, setSelectedSubjectId] = useState<number | ''>('')
+  const [numQuestions, setNumQuestions] = useState(10)
+  const [generating, setGenerating] = useState(false)
+  const [generationNotice, setGenerationNotice] = useState<string | null>(null)
+
   // Questions
   const [questions, setQuestions] = useState<GeneratedQuestion[]>([])
   const [questionsLoading, setQuestionsLoading] = useState(true)
@@ -152,6 +159,22 @@ export default function QuestionGeneratorPage() {
     }
   }, [])
 
+  // Fetch available subjects for the dropdown (Phase 3.1)
+  useEffect(() => {
+    let cancelled = false
+    api
+      .get('/shared/subjects/')
+      .then((res) => {
+        if (cancelled) return
+        const data = res.data.results ?? res.data.data ?? res.data
+        setSubjectOptions(Array.isArray(data) ? data.map((s: { id: number; name: string }) => ({ id: s.id, name: s.name })) : [])
+      })
+      .catch(() => {
+        // Silent — subject picker will just be empty
+      })
+    return () => { cancelled = true }
+  }, [])
+
   // Fetch questions (with filters)
   const fetchQuestions = useCallback(async () => {
     try {
@@ -174,15 +197,20 @@ export default function QuestionGeneratorPage() {
     fetchQuestions()
   }, [fetchQuestions])
 
-  // Upload handler
+  // Upload handler (Phase 3.1: dispatches AI question generation task)
   const handleUpload = useCallback(async () => {
     if (!uploadFile || !subjectContext.trim()) return
     try {
       setUploading(true)
       setUploadError(null)
+      setGenerationNotice(null)
       const formData = new FormData()
       formData.append('file', uploadFile)
       formData.append('subject_context', subjectContext.trim())
+      if (selectedSubjectId) {
+        formData.append('subject_id', String(selectedSubjectId))
+        formData.append('num_questions', String(numQuestions))
+      }
       const res = await api.post('/principal/documents/', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
@@ -191,12 +219,45 @@ export default function QuestionGeneratorPage() {
       setUploadFile(null)
       setSubjectContext('')
       if (fileInputRef.current) fileInputRef.current.value = ''
+
+      // If a subject was selected, AI generation was dispatched — poll for results
+      if (selectedSubjectId) {
+        setGenerating(true)
+        setGenerationNotice('Generating questions with AI. This usually takes 10-30 seconds.')
+        const existingIds = new Set(questions.map((q) => q.id))
+        const startedAt = Date.now()
+        const pollInterval = 3000
+        const maxDuration = 120_000 // 2 min
+        const timer = window.setInterval(async () => {
+          try {
+            const pollRes = await api.get('/principal/questions/', {
+              params: { source_document: newDoc.id },
+            })
+            const fresh = pollRes.data.results ?? pollRes.data.data ?? pollRes.data
+            const freshList: GeneratedQuestion[] = Array.isArray(fresh) ? fresh : []
+            const newOnes = freshList.filter((q) => !existingIds.has(q.id))
+            if (newOnes.length > 0) {
+              window.clearInterval(timer)
+              setGenerating(false)
+              setGenerationNotice(`Generated ${newOnes.length} questions. Refreshing list...`)
+              fetchQuestions()
+              window.setTimeout(() => setGenerationNotice(null), 4000)
+            } else if (Date.now() - startedAt > maxDuration) {
+              window.clearInterval(timer)
+              setGenerating(false)
+              setGenerationNotice('Generation is taking longer than expected. It may still finish in the background — refresh the questions list later.')
+            }
+          } catch {
+            // Non-fatal — keep polling until the timeout
+          }
+        }, pollInterval)
+      }
     } catch (err: unknown) {
       setUploadError(err instanceof Error ? err.message : 'Upload failed. Please try again.')
     } finally {
       setUploading(false)
     }
-  }, [uploadFile, subjectContext])
+  }, [uploadFile, subjectContext, selectedSubjectId, numQuestions, questions, fetchQuestions])
 
   // Approve / Reject handlers
   const handleApprove = useCallback(async (questionId: number) => {
@@ -318,6 +379,64 @@ export default function QuestionGeneratorPage() {
                   className="w-full bg-surface-container-low border-none rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20"
                 />
               </div>
+
+              {/* AI Question Generation (Phase 3.1) */}
+              <div className="space-y-3 pt-1">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-primary text-base">auto_awesome</span>
+                  <p className="text-xs font-bold text-on-surface uppercase tracking-widest">AI Question Generation</p>
+                  <span className="text-[10px] text-on-surface-variant bg-surface-container-low px-2 py-0.5 rounded-full">Optional</span>
+                </div>
+                <p className="text-xs text-on-surface-variant leading-relaxed">
+                  Select a subject to automatically generate exam questions from this document after upload.
+                  Leave blank to upload without generating.
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="sm:col-span-2">
+                    <label htmlFor="subject-picker" className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-2">
+                      Subject
+                    </label>
+                    <select
+                      id="subject-picker"
+                      value={selectedSubjectId}
+                      onChange={(e) => setSelectedSubjectId(e.target.value ? Number(e.target.value) : '')}
+                      className="w-full bg-surface-container-low border-none rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20"
+                    >
+                      <option value="">— Skip AI generation —</option>
+                      {subjectOptions.map((s) => (
+                        <option key={s.id} value={s.id}>{s.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="num-questions" className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-2">
+                      Count
+                    </label>
+                    <input
+                      id="num-questions"
+                      type="number"
+                      min={1}
+                      max={50}
+                      value={numQuestions}
+                      onChange={(e) => setNumQuestions(Math.max(1, Math.min(50, Number(e.target.value) || 10)))}
+                      disabled={!selectedSubjectId}
+                      className="w-full bg-surface-container-low border-none rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {generationNotice && (
+                <div role="status" className="flex items-start gap-2 bg-primary/5 border border-primary/10 rounded-lg px-3 py-2.5">
+                  {generating ? (
+                    <span className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin mt-0.5 flex-shrink-0" />
+                  ) : (
+                    <span className="material-symbols-outlined text-primary text-base mt-0.5">info</span>
+                  )}
+                  <p className="text-xs text-on-surface leading-relaxed">{generationNotice}</p>
+                </div>
+              )}
 
               {uploadError && (
                 <p className="text-error text-xs font-medium" role="alert">

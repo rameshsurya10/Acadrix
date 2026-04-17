@@ -30,7 +30,7 @@ class StudentProfile(models.Model):
 
 
 class Guardian(models.Model):
-    """Guardian contact info stored on student profile. No separate login."""
+    """Guardian contact info. Phone is the parent login identifier (Phase 0.1)."""
     student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='guardians')
     name = models.CharField(max_length=120, default='')
     relationship = models.CharField(max_length=30, default='parent')
@@ -41,6 +41,9 @@ class Guardian(models.Model):
 
     class Meta:
         db_table = 'guardians'
+        indexes = [
+            models.Index(fields=['phone']),
+        ]
 
     def __str__(self):
         return f'{self.name} ({self.relationship}) → {self.student}'
@@ -160,8 +163,16 @@ class Payment(models.Model):
         CREDIT_CARD = 'credit_card', 'Credit Card'
         CASH = 'cash', 'Cash'
         STRIPE = 'stripe', 'Stripe (Card)'
+        RAZORPAY = 'razorpay', 'Razorpay (Online)'
         CHEQUE = 'cheque', 'Cheque'
         OTHER = 'other', 'Other'
+
+    class GatewayStatus(models.TextChoices):
+        CREATED = 'created', 'Created'          # order created, user not yet paid
+        AUTHORIZED = 'authorized', 'Authorized' # captured pending
+        CAPTURED = 'captured', 'Captured'       # money settled
+        FAILED = 'failed', 'Failed'
+        REFUNDED = 'refunded', 'Refunded'
 
     account = models.ForeignKey(TuitionAccount, on_delete=models.CASCADE, related_name='payments')
     receipt_id = models.CharField(max_length=30, unique=True)
@@ -174,10 +185,21 @@ class Payment(models.Model):
     paid_at = models.DateTimeField(auto_now_add=True)
     notes = models.TextField(blank=True)
 
+    # Razorpay fields (nullable — only set for online payments)
+    razorpay_order_id = models.CharField(max_length=64, blank=True, null=True, unique=True)
+    razorpay_payment_id = models.CharField(max_length=64, blank=True, default='')
+    razorpay_signature = models.CharField(max_length=256, blank=True, default='')
+    gateway_status = models.CharField(
+        max_length=20, choices=GatewayStatus.choices, blank=True, default='',
+    )
+
     class Meta:
         db_table = 'payments'
         ordering = ['-paid_at']
-        indexes = [models.Index(fields=['receipt_id'])]
+        indexes = [
+            models.Index(fields=['receipt_id']),
+            models.Index(fields=['razorpay_payment_id']),
+        ]
 
 
 class PaymentMethod(models.Model):

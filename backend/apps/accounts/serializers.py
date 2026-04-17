@@ -84,3 +84,13 @@ class ResetPasswordSerializer(serializers.Serializer):
 
 class TourProgressSerializer(serializers.Serializer):
     tour_key = serializers.CharField(max_length=60)
+
+
+class ParentRequestOTPSerializer(serializers.Serializer):
+    phone = serializers.CharField(max_length=20)
+
+
+class ParentVerifyOTPSerializer(serializers.Serializer):
+    phone = serializers.CharField(max_length=20)
+    otp = serializers.CharField(max_length=6, min_length=6)
+    child_id = serializers.IntegerField(required=False)

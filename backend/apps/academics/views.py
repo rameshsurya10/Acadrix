@@ -1,4 +1,6 @@
+from django.http import HttpResponse
 from rest_framework import status, viewsets
+from rest_framework.decorators import action
 from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -19,6 +21,11 @@ from apps.academics.serializers import (
     IssuedCertificateSerializer,
     ReportCardTemplateSerializer,
     ReportCardTermSerializer,
+)
+from apps.shared.services.pdf_generator import (
+    PDFGenerationError,
+    render_certificate_pdf,
+    render_report_card_pdf,
 )
 
 
@@ -122,6 +129,24 @@ class GeneratedReportCardViewSet(viewsets.ReadOnlyModelViewSet):
             qs = qs.filter(student__user=self.request.user)
         return qs
 
+    @action(detail=True, methods=['get'], url_path='pdf')
+    def pdf(self, request, pk=None):
+        """GET /academics/report-cards/{id}/pdf/ — download as PDF."""
+        report_card = self.get_object()
+        try:
+            pdf_bytes = render_report_card_pdf(report_card, request=request)
+        except PDFGenerationError as exc:
+            return Response(
+                {'success': False, 'error': str(exc)},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+        filename = f'report-card-{report_card.student.student_id}-{report_card.term.term}.pdf'
+        response = HttpResponse(pdf_bytes, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        response['Content-Length'] = str(len(pdf_bytes))
+        return response
+
 
 # ---------------------------------------------------------------------------
 # Student's Own Report Cards
@@ -211,6 +236,24 @@ class IssuedCertificateViewSet(viewsets.ReadOnlyModelViewSet):
         if self.request.user.role == 'student':
             qs = qs.filter(student__user=self.request.user)
         return qs
+
+    @action(detail=True, methods=['get'], url_path='pdf')
+    def pdf(self, request, pk=None):
+        """GET /academics/certificates/{id}/pdf/ — download as PDF."""
+        certificate = self.get_object()
+        try:
+            pdf_bytes = render_certificate_pdf(certificate, request=request)
+        except PDFGenerationError as exc:
+            return Response(
+                {'success': False, 'error': str(exc)},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+        filename = f'{certificate.template.cert_type}-{certificate.serial_number}.pdf'
+        response = HttpResponse(pdf_bytes, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        response['Content-Length'] = str(len(pdf_bytes))
+        return response
 
 
 # ---------------------------------------------------------------------------

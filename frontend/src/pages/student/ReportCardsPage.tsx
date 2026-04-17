@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import PageLayout from '@/components/layout/PageLayout'
 import { academicsService, type GeneratedReportCard, type IssuedCertificate } from '@/services/academics/academicsService'
 import { Bone } from '@/components/shared/Skeleton'
+import { downloadBlob } from '@/lib/download'
 
 const STATUS_STYLES: Record<string, { dot: string; text: string; label: string }> = {
   draft:       { dot: 'bg-outline',   text: 'text-on-surface-variant', label: 'Draft' },
@@ -19,7 +20,38 @@ export default function ReportCardsPage() {
   const [loadingCerts, setLoadingCerts] = useState(true)
   const [expandedCard, setExpandedCard] = useState<number | null>(null)
   const [expandedCert, setExpandedCert] = useState<number | null>(null)
+  const [downloadingCard, setDownloadingCard] = useState<number | null>(null)
+  const [downloadingCert, setDownloadingCert] = useState<number | null>(null)
   const [error, setError] = useState('')
+
+  async function handleDownloadCard(card: GeneratedReportCard) {
+    setDownloadingCard(card.id)
+    setError('')
+    try {
+      const blob = await academicsService.downloadReportCardPdf(card.id)
+      const safeTerm = card.term_display.replace(/\s+/g, '-').toLowerCase()
+      downloadBlob(blob, `report-card-${card.student_id_str}-${safeTerm}.pdf`)
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error
+      setError(msg ?? 'Failed to download report card PDF.')
+    } finally {
+      setDownloadingCard(null)
+    }
+  }
+
+  async function handleDownloadCert(cert: IssuedCertificate) {
+    setDownloadingCert(cert.id)
+    setError('')
+    try {
+      const blob = await academicsService.downloadCertificatePdf(cert.id)
+      downloadBlob(blob, `${cert.cert_type_display.replace(/\s+/g, '-').toLowerCase()}-${cert.serial_number}.pdf`)
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error
+      setError(msg ?? 'Failed to download certificate PDF.')
+    } finally {
+      setDownloadingCert(null)
+    }
+  }
 
   useEffect(() => {
     async function loadCards() {
@@ -198,8 +230,28 @@ export default function ReportCardsPage() {
                       </button>
                       {isExpanded && (
                         <div className="px-5 pb-5 pt-0 border-t border-outline-variant/10">
-                          <div className="pt-4">
+                          <div className="pt-4 space-y-4">
                             {renderSnapshot(card.data_snapshot)}
+                            <div className="flex justify-end pt-2">
+                              <button
+                                type="button"
+                                onClick={() => handleDownloadCard(card)}
+                                disabled={downloadingCard === card.id}
+                                className="flex items-center gap-2 bg-primary text-on-primary text-sm font-semibold px-4 py-2 rounded-lg hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
+                              >
+                                {downloadingCard === card.id ? (
+                                  <>
+                                    <span className="w-4 h-4 border-2 border-on-primary/30 border-t-on-primary rounded-full animate-spin" />
+                                    Generating...
+                                  </>
+                                ) : (
+                                  <>
+                                    <span className="material-symbols-outlined text-base">download</span>
+                                    Download PDF
+                                  </>
+                                )}
+                              </button>
+                            </div>
                           </div>
                         </div>
                       )}
@@ -280,6 +332,26 @@ export default function ReportCardsPage() {
                                 <p className="text-sm text-on-surface">{cert.reason}</p>
                               </div>
                             )}
+                            <div className="flex justify-end pt-2">
+                              <button
+                                type="button"
+                                onClick={() => handleDownloadCert(cert)}
+                                disabled={downloadingCert === cert.id}
+                                className="flex items-center gap-2 bg-tertiary text-on-tertiary text-sm font-semibold px-4 py-2 rounded-lg hover:bg-tertiary/90 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
+                              >
+                                {downloadingCert === cert.id ? (
+                                  <>
+                                    <span className="w-4 h-4 border-2 border-on-tertiary/30 border-t-on-tertiary rounded-full animate-spin" />
+                                    Generating...
+                                  </>
+                                ) : (
+                                  <>
+                                    <span className="material-symbols-outlined text-base">download</span>
+                                    Download PDF
+                                  </>
+                                )}
+                              </button>
+                            </div>
                           </div>
                         </div>
                       )}

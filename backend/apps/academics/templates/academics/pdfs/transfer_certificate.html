@@ -1,0 +1,60 @@
+{% extends "academics/pdfs/_base.html" %}
+
+{% block title %}Transfer Certificate — {{ student.name }}{% endblock %}
+
+{% block content %}
+<div class="document-title">Transfer Certificate</div>
+
+<div style="display: flex; justify-content: space-between; margin-bottom: 14pt;">
+  <div>
+    <div class="field-row"><div class="field-label" style="width:55%;">Serial No.</div><div class="field-value">{{ certificate.serial_number }}</div></div>
+  </div>
+  <div>
+    <div class="field-row"><div class="field-label" style="width:55%;">Date Issued</div><div class="field-value">{{ certificate.issued_date }}</div></div>
+  </div>
+</div>
+
+<table>
+  <tbody>
+    <tr><th style="width: 40%;">1. Name of the Student</th><td>{{ student.name }}</td></tr>
+    <tr><th>2. Father's / Guardian's Name</th><td>{{ student.father_name }}</td></tr>
+    <tr><th>3. Date of Birth</th><td>{{ student.date_of_birth }}</td></tr>
+    <tr><th>4. Student ID</th><td>{{ student.student_id }}</td></tr>
+    <tr><th>5. Address</th><td>{{ student.address }}</td></tr>
+    <tr><th>6. Date of Admission</th><td>{{ certificate.date_of_admission }}</td></tr>
+    <tr><th>7. Class at the Time of Leaving</th><td>{{ certificate.class_at_leaving }}</td></tr>
+    <tr><th>8. Date of Leaving</th><td>{{ certificate.date_of_leaving }}</td></tr>
+    <tr><th>9. Reason for Leaving</th><td>{{ certificate.reason_for_leaving }}</td></tr>
+    <tr><th>10. Total Working Days</th><td>{{ certificate.working_days|default:"-" }}</td></tr>
+    <tr><th>11. Total Days Present</th><td>{{ certificate.days_present|default:"-" }}</td></tr>
+    <tr><th>12. Conduct</th><td>{{ certificate.conduct }}</td></tr>
+    <tr>
+      <th>13. Qualified for Promotion</th>
+      <td>
+        {% if certificate.qualified_for_promotion %}Yes
+        {% elif certificate.qualified_for_promotion is False %}No
+        {% else %}N/A
+        {% endif %}
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+{% if certificate.reason %}
+<p style="margin-top: 14pt;"><strong>Remarks:</strong> {{ certificate.reason }}</p>
+{% endif %}
+
+<p style="margin-top: 20pt;">
+  This is to certify that the particulars given above are true to the best of
+  the school's records and knowledge.
+</p>
+
+<div class="signature-block">
+  <div class="signature">
+    <div class="signature-line">Class Teacher</div>
+  </div>
+  <div class="signature">
+    <div class="signature-line">Principal</div>
+  </div>
+</div>
+{% endblock %}

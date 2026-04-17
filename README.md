@@ -15,24 +15,31 @@ A comprehensive, multi-role school management platform for K-12 institutions in 
 
 ## Quick Start
 
-### Prerequisites
+### Option A: Docker (recommended)
 
-- Python 3.11+
-- Node.js 18+
-- PostgreSQL 14+
+```bash
+docker compose up --build
+```
 
-### Backend
+This starts Postgres, Redis, the Django backend, and the React frontend.
+Open `http://localhost:5173`. Backend API at `http://localhost:8000`.
+
+### Option B: Manual setup
+
+**Prerequisites:** Python 3.11+, Node.js 18+, PostgreSQL 14+
+
+**Backend:**
 
 ```bash
 cd backend
 python -m venv venv && source venv/bin/activate
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 cp .env.example .env   # fill in DB credentials, secrets
 python manage.py migrate
 python manage.py runserver
 ```
 
-### Frontend
+**Frontend:**
 
 ```bash
 cd frontend
@@ -41,6 +48,29 @@ npm run dev
 ```
 
 The frontend proxies `/api` requests to `localhost:8000` via Vite config.
+
+### Running Tests
+
+**Backend (pytest):**
+
+```bash
+cd backend
+pytest                              # all tests
+pytest tests/accounts/              # one app
+pytest -k parent_login              # by keyword
+pytest --cov=apps --cov-report=html # coverage report
+```
+
+Tests use SQLite in-memory via `config/settings_test.py` so they don't need Postgres.
+
+**Frontend (vitest):**
+
+```bash
+cd frontend
+npm test                  # watch mode
+npm run test:run          # single run (for CI)
+npm run test:coverage     # coverage report
+```
 
 ### Environment Variables
 
@@ -54,6 +84,16 @@ Copy `backend/.env.example` and configure:
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Google OAuth2 credentials |
 | `JWT_ACCESS_TOKEN_LIFETIME_MINUTES` | Access token TTL (default 60) |
 | `JWT_REFRESH_TOKEN_LIFETIME_DAYS` | Refresh token TTL (default 7) |
+| `REDIS_URL` | Redis connection (default `redis://localhost:6379/0`) |
+| `CELERY_BROKER_URL` | Celery broker (defaults to `REDIS_URL`) |
+| `MSG91_AUTH_KEY` | MSG91 API key. Empty = dev mode (console stub) |
+| `MSG91_OTP_TEMPLATE_ID` | MSG91 DLT template ID with `##OTP##` placeholder |
+| `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` | Razorpay API credentials. Empty = online payments disabled |
+| `RAZORPAY_WEBHOOK_SECRET` | Webhook signing secret (separate from API secret) |
+| `USE_S3_STORAGE` | `True` routes uploads to S3/R2/B2/MinIO. `False` (default) = local disk |
+| `AWS_STORAGE_BUCKET_NAME` + `AWS_ACCESS_KEY_ID` + `AWS_SECRET_ACCESS_KEY` | Bucket credentials (only needed if `USE_S3_STORAGE=True`) |
+| `AWS_S3_ENDPOINT_URL` | Blank for real AWS; set for R2/B2/MinIO |
+| `DB_SSLMODE` | `prefer` (default) / `require` / `disable` |
 
 ---
 

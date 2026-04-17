@@ -5,6 +5,7 @@ interface LoginResponse {
   access: string
   refresh: string
   user: AuthUser
+  is_parent_session?: boolean
 }
 
 interface IdentifyResponse {
@@ -16,6 +17,26 @@ interface IdentifyResponse {
     name: string
   }
 }
+
+export interface ParentChild {
+  student_user_id: number
+  student_id: string
+  name: string
+  section: string | null
+}
+
+interface ParentRequestOTPResponse {
+  success: true
+  data: {
+    method: 'otp'
+    masked_phone: string
+    child_count: number
+  }
+}
+
+export type ParentVerifyResponse =
+  | (LoginResponse & { is_parent_session: true; requires_child_selection?: false })
+  | { success: true; requires_child_selection: true; children: ParentChild[] }
 
 export const authService = {
   async identify(identifier: string): Promise<IdentifyResponse['data']> {
@@ -80,5 +101,17 @@ export const authService = {
 
   async completeTour(tourKey: string): Promise<void> {
     await api.post('/auth/tour-progress/', { tour_key: tourKey })
+  },
+
+  async parentRequestOTP(phone: string): Promise<ParentRequestOTPResponse['data']> {
+    const { data } = await api.post<ParentRequestOTPResponse>('/auth/parent/request-otp/', { phone })
+    return data.data
+  },
+
+  async parentVerifyOTP(phone: string, otp: string, childId?: number): Promise<ParentVerifyResponse> {
+    const payload: { phone: string; otp: string; child_id?: number } = { phone, otp }
+    if (childId) payload.child_id = childId
+    const { data } = await api.post<ParentVerifyResponse>('/auth/parent/verify-otp/', payload)
+    return data
   },
 }

@@ -81,7 +81,12 @@ class SubjectViewSet(ModelViewSet):
 
 
 class GradeViewSet(ModelViewSet):
-    """Read for all; write for admins."""
+    """Read for all; write for admins.
+
+    List endpoint is cached for 10 minutes (Phase 1.6). Grades change
+    extremely rarely (once per year at most). The cache is invalidated
+    automatically by the `reference` version bump on Grade save/delete.
+    """
 
     serializer_class = GradeSerializer
     permission_classes = [IsAuthenticated]
@@ -93,6 +98,16 @@ class GradeViewSet(ModelViewSet):
         if self.action in ('create', 'update', 'partial_update', 'destroy'):
             return [IsAdmin()]
         return super().get_permissions()
+
+    def list(self, request, *args, **kwargs):
+        from apps.shared.cache_utils import cache_or_compute
+        data = cache_or_compute(
+            group='reference',
+            parts=('grades_list',),
+            timeout=600,
+            compute=lambda: self.get_serializer(self.get_queryset(), many=True).data,
+        )
+        return Response(data)
 
 
 class SectionViewSet(ModelViewSet):
@@ -212,21 +227,65 @@ class MessageViewSet(ModelViewSet):
 
 
 class FacultyDirectoryView(APIView):
-    """GET — list all teachers with profile, department, and performance info."""
+    """GET — list all teachers with profile, department, and performance info.
+
+    The unfiltered version (no search, no department) is cached for 5 minutes
+    (Phase 1.6). Filtered requests bypass the cache because cache keys would
+    explode with every query combination.
+    """
 
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         from apps.teacher.models import TeacherProfile
+        from apps.shared.cache_utils import cache_or_compute
 
+        search = request.query_params.get('search', '').strip()
+        department_id = request.query_params.get('department')
+        is_filtered = bool(search or department_id)
+
+        def _build_teacher_list(qs):
+            return [
+                {
+                    'id': tp.user_id,
+                    'employee_id': tp.employee_id,
+                    'name': tp.user.full_name,
+                    'email': tp.user.email,
+                    'avatar_url': request.build_absolute_uri(tp.user.avatar.url) if tp.user.avatar else None,
+                    'department': tp.department.name if tp.department else None,
+                    'department_id': tp.department_id,
+                    'title': tp.title,
+                    'qualification': tp.qualification,
+                    'specialization': tp.specialization,
+                    'employment_status': tp.employment_status,
+                    'performance_score': float(tp.performance_score) if tp.performance_score else None,
+                }
+                for tp in qs
+            ]
+
+        def _compute_unfiltered():
+            qs = (
+                TeacherProfile.objects
+                .filter(is_active=True)
+                .select_related('user', 'department')
+            )
+            return _build_teacher_list(qs)
+
+        if not is_filtered:
+            teachers = cache_or_compute(
+                group='reference',
+                parts=('faculty_directory',),
+                timeout=300,
+                compute=_compute_unfiltered,
+            )
+            return Response({'success': True, 'data': teachers})
+
+        # Filtered path — never cached
         queryset = (
             TeacherProfile.objects
             .filter(is_active=True)
             .select_related('user', 'department')
         )
-
-        # Optional search filter
-        search = request.query_params.get('search', '').strip()
         if search:
             from django.db.models import Q
             queryset = queryset.filter(
@@ -235,31 +294,10 @@ class FacultyDirectoryView(APIView):
                 | Q(department__name__icontains=search)
                 | Q(specialization__icontains=search)
             ).distinct()
-
-        # Optional department filter
-        department_id = request.query_params.get('department')
         if department_id:
             queryset = queryset.filter(department_id=department_id)
 
-        teachers = [
-            {
-                'id': tp.user_id,
-                'employee_id': tp.employee_id,
-                'name': tp.user.full_name,
-                'email': tp.user.email,
-                'avatar_url': request.build_absolute_uri(tp.user.avatar.url) if tp.user.avatar else None,
-                'department': tp.department.name if tp.department else None,
-                'department_id': tp.department_id,
-                'title': tp.title,
-                'qualification': tp.qualification,
-                'specialization': tp.specialization,
-                'employment_status': tp.employment_status,
-                'performance_score': float(tp.performance_score) if tp.performance_score else None,
-            }
-            for tp in queryset
-        ]
-
-        return Response({'success': True, 'data': teachers})
+        return Response({'success': True, 'data': _build_teacher_list(queryset)})
 
 
 class FacultyProfileView(APIView):

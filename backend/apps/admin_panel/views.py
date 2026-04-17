@@ -152,38 +152,47 @@ class AdminNotificationViewSet(viewsets.ReadOnlyModelViewSet):
 # ── Dashboard Stats ────────────────────────────────────────────────
 
 class DashboardStatsView(GenericAPIView):
-    """GET /dashboard-stats/ — aggregated metrics for the admin dashboard."""
+    """GET /dashboard-stats/ — aggregated metrics for the admin dashboard.
+
+    Cached for 60s per-user (Phase 1.6). The per-user key is because
+    unread_notifications is user-scoped. Signals in apps/shared/signals.py
+    bump the dashboard version when students/teachers/admissions change.
+    """
     permission_classes = [IsAdmin]
 
     def get(self, request):
-        total_students = StudentProfile.objects.filter(is_active=True).count()
-        total_teachers = TeacherProfile.objects.filter(is_active=True).count()
-        pending_admissions = AdmissionApplication.objects.filter(
-            status=AdmissionApplication.Status.PENDING,
-        ).count()
+        from apps.shared.cache_utils import cache_or_compute
 
-        # Capacity: sum of section capacities vs enrolled students
-        total_capacity = Section.objects.aggregate(
-            total=Sum('capacity'),
-        )['total'] or 0
-        capacity_pct = (
-            round((total_students / total_capacity) * 100, 1)
-            if total_capacity > 0
-            else 0.0
+        def _compute():
+            total_students = StudentProfile.objects.filter(is_active=True).count()
+            total_teachers = TeacherProfile.objects.filter(is_active=True).count()
+            pending_admissions = AdmissionApplication.objects.filter(
+                status=AdmissionApplication.Status.PENDING,
+            ).count()
+            total_capacity = Section.objects.aggregate(total=Sum('capacity'))['total'] or 0
+            capacity_pct = (
+                round((total_students / total_capacity) * 100, 1)
+                if total_capacity > 0 else 0.0
+            )
+            unread_notifications = AdminNotification.objects.filter(
+                recipient=request.user, is_read=False,
+            ).count()
+            return {
+                'total_students': total_students,
+                'total_teachers': total_teachers,
+                'pending_admissions': pending_admissions,
+                'capacity_percent': capacity_pct,
+                'total_capacity': total_capacity,
+                'unread_notifications': unread_notifications,
+            }
+
+        data = cache_or_compute(
+            group='dashboard',
+            parts=('admin_stats', request.user.id),
+            timeout=60,
+            compute=_compute,
         )
-
-        unread_notifications = AdminNotification.objects.filter(
-            recipient=request.user, is_read=False,
-        ).count()
-
-        return Response({
-            'total_students': total_students,
-            'total_teachers': total_teachers,
-            'pending_admissions': pending_admissions,
-            'capacity_percent': capacity_pct,
-            'total_capacity': total_capacity,
-            'unread_notifications': unread_notifications,
-        })
+        return Response(data)
 
 
 # ── ID Configuration ──────────────────────────────────────────────

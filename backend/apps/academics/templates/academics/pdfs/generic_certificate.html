@@ -1,0 +1,39 @@
+{% extends "academics/pdfs/_base.html" %}
+
+{% block title %}{{ certificate.cert_type }} — {{ student.name }}{% endblock %}
+
+{% block content %}
+<div class="document-title">{{ certificate.cert_type }}</div>
+
+<div style="text-align: right; margin-bottom: 20pt;">
+  <div><strong>Serial No:</strong> {{ certificate.serial_number }}</div>
+  <div><strong>Date:</strong> {{ certificate.issued_date }}</div>
+</div>
+
+{% if certificate.rendered_body %}
+<div style="font-size: 12pt; line-height: 1.8; text-align: justify; white-space: pre-wrap;">
+{{ certificate.rendered_body }}
+</div>
+{% else %}
+<p style="font-size: 12pt; line-height: 1.8; text-align: justify;">
+  This is to certify that <strong>{{ student.name }}</strong>
+  {% if student.father_name %}(son/daughter of {{ student.father_name }}){% endif %},
+  bearing Student ID <strong>{{ student.student_id }}</strong>,
+  is a student of <strong>{{ school.name }}</strong>.
+</p>
+{% if certificate.reason %}
+<p style="font-size: 12pt; line-height: 1.8; text-align: justify;">
+  Issued for: <em>{{ certificate.reason }}</em>
+</p>
+{% endif %}
+{% endif %}
+
+<div class="signature-block" style="margin-top: 40pt;">
+  <div class="signature">
+    <div class="signature-line">Office Seal</div>
+  </div>
+  <div class="signature">
+    <div class="signature-line">Principal</div>
+  </div>
+</div>
+{% endblock %}

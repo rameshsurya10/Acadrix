@@ -1,0 +1,44 @@
+{% extends "academics/pdfs/_base.html" %}
+
+{% block title %}Bonafide Certificate — {{ student.name }}{% endblock %}
+
+{% block content %}
+<div class="document-title">Bonafide Certificate</div>
+
+<div style="text-align: right; margin-bottom: 20pt;">
+  <div><strong>Serial No:</strong> {{ certificate.serial_number }}</div>
+  <div><strong>Date:</strong> {{ certificate.issued_date }}</div>
+</div>
+
+<p style="font-size: 12pt; line-height: 1.8; text-align: justify; margin-top: 20pt;">
+  This is to certify that <strong>{{ student.name }}</strong>,
+  {% if student.father_name %}son/daughter of <strong>{{ student.father_name }}</strong>,{% endif %}
+  bearing Student ID <strong>{{ student.student_id }}</strong>,
+  is a bonafide student of <strong>{{ school.name }}</strong>.
+</p>
+
+{% if student.date_of_birth %}
+<p style="font-size: 12pt; line-height: 1.8; text-align: justify;">
+  As per the school records, the student's date of birth is <strong>{{ student.date_of_birth }}</strong>.
+</p>
+{% endif %}
+
+{% if certificate.reason %}
+<p style="font-size: 12pt; line-height: 1.8; text-align: justify;">
+  This certificate is issued for the purpose of: <em>{{ certificate.reason }}</em>.
+</p>
+{% endif %}
+
+<p style="font-size: 12pt; line-height: 1.8; text-align: justify;">
+  We wish the student all success in their future endeavours.
+</p>
+
+<div class="signature-block" style="margin-top: 40pt;">
+  <div class="signature">
+    <div class="signature-line">Office Seal</div>
+  </div>
+  <div class="signature">
+    <div class="signature-line">Principal</div>
+  </div>
+</div>
+{% endblock %}

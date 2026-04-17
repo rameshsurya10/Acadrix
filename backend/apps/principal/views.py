@@ -21,7 +21,13 @@ from .serializers import (
 
 
 class SourceDocumentViewSet(ModelViewSet):
-    """Upload and list source documents for AI question generation."""
+    """Upload and list source documents for AI question generation.
+
+    On POST, dispatches an async Celery task that runs the LLM question
+    generator (Phase 3.1). The upload request returns immediately with the
+    SourceDocument; the frontend polls GET /principal/questions/?source_document=ID
+    to see questions as they arrive.
+    """
 
     serializer_class = SourceDocumentSerializer
     permission_classes = [IsAdminOrPrincipal]
@@ -31,6 +37,25 @@ class SourceDocumentViewSet(ModelViewSet):
 
     def get_queryset(self):
         return SourceDocument.objects.select_related('uploaded_by').all()
+
+    def perform_create(self, serializer):
+        doc = serializer.save()
+        subject_id = self.request.data.get('subject_id')
+        if not subject_id:
+            return  # No subject = no question generation (user uploaded for later)
+
+        try:
+            num_questions = int(self.request.data.get('num_questions', 10))
+        except (TypeError, ValueError):
+            num_questions = 10
+        num_questions = max(1, min(num_questions, 50))
+
+        from apps.principal.tasks import generate_questions_from_document_task
+        generate_questions_from_document_task.delay(
+            source_document_id=doc.id,
+            subject_id=int(subject_id),
+            num_questions=num_questions,
+        )
 
 
 class GeneratedQuestionViewSet(ModelViewSet):
@@ -91,41 +116,53 @@ class InstitutionEventViewSet(ModelViewSet):
 
 
 class PrincipalDashboardView(APIView):
-    """GET — returns institutional metrics for the principal dashboard."""
+    """GET — returns institutional metrics for the principal dashboard.
+
+    Cached for 120s globally (Phase 1.6). Not per-user because the data is
+    the same for every principal who views it.
+    """
 
     permission_classes = [IsPrincipal]
 
     def get(self, request):
-        now = timezone.now()
-        total_students = StudentProfile.objects.filter(is_active=True).count()
-        total_teachers = TeacherProfile.objects.filter(is_active=True).count()
+        from apps.shared.cache_utils import cache_or_compute
 
-        question_stats = GeneratedQuestion.objects.aggregate(
-            total=Count('id'),
-            approved=Count('id', filter=Q(status=GeneratedQuestion.Status.APPROVED)),
-            pending=Count('id', filter=Q(status=GeneratedQuestion.Status.DRAFT)),
-            rejected=Count('id', filter=Q(status=GeneratedQuestion.Status.REJECTED)),
-        )
+        def _compute():
+            now = timezone.now()
+            total_students = StudentProfile.objects.filter(is_active=True).count()
+            total_teachers = TeacherProfile.objects.filter(is_active=True).count()
 
-        assessment_stats = Assessment.objects.aggregate(
-            total=Count('id'),
-            scheduled=Count('id', filter=Q(status=Assessment.Status.SCHEDULED)),
-            completed=Count('id', filter=Q(status=Assessment.Status.COMPLETED)),
-        )
+            question_stats = GeneratedQuestion.objects.aggregate(
+                total=Count('id'),
+                approved=Count('id', filter=Q(status=GeneratedQuestion.Status.APPROVED)),
+                pending=Count('id', filter=Q(status=GeneratedQuestion.Status.DRAFT)),
+                rejected=Count('id', filter=Q(status=GeneratedQuestion.Status.REJECTED)),
+            )
 
-        upcoming_events = InstitutionEventSerializer(
-            InstitutionEvent.objects.filter(event_date__gte=now)[:5],
-            many=True,
-            context={'request': request},
-        ).data
+            assessment_stats = Assessment.objects.aggregate(
+                total=Count('id'),
+                scheduled=Count('id', filter=Q(status=Assessment.Status.SCHEDULED)),
+                completed=Count('id', filter=Q(status=Assessment.Status.COMPLETED)),
+            )
 
-        return Response({
-            'success': True,
-            'data': {
+            upcoming_events = InstitutionEventSerializer(
+                InstitutionEvent.objects.filter(event_date__gte=now)[:5],
+                many=True,
+                context={'request': request},
+            ).data
+
+            return {
                 'total_students': total_students,
                 'total_teachers': total_teachers,
                 'questions': question_stats,
                 'assessments': assessment_stats,
                 'upcoming_events': upcoming_events,
-            },
-        })
+            }
+
+        data = cache_or_compute(
+            group='dashboard',
+            parts=('principal_stats',),
+            timeout=120,
+            compute=_compute,
+        )
+        return Response({'success': True, 'data': data})

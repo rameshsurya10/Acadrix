@@ -1,7 +1,7 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from . import views
+from . import views, razorpay_views
 
 app_name = 'student'
 
@@ -19,5 +19,15 @@ urlpatterns = [
     path('tuition/', views.TuitionAccountView.as_view(), name='tuition'),
     path('grades/', views.StudentGradesView.as_view(), name='student-grades'),
     path('parent-dashboard/', views.ParentDashboardView.as_view(), name='parent-dashboard'),
+    path(
+        'payments/razorpay/create-order/',
+        razorpay_views.CreateRazorpayOrderView.as_view(),
+        name='razorpay-create-order',
+    ),
+    path(
+        'payments/razorpay/verify/',
+        razorpay_views.VerifyRazorpayPaymentView.as_view(),
+        name='razorpay-verify',
+    ),
     path('', include(router.urls)),
 ]

@@ -42,13 +42,14 @@ class User(AbstractUser):
 
 
 class OTP(models.Model):
-    """Email-based OTP for login and forgot-password flows."""
+    """OTP for login and forgot-password flows. Routed via email OR phone (parent login)."""
 
     class Purpose(models.TextChoices):
         LOGIN = 'login', 'Login'
         FORGOT_PASSWORD = 'forgot_password', 'Forgot Password'
 
-    email = models.EmailField()
+    email = models.EmailField(blank=True)
+    phone = models.CharField(max_length=20, blank=True)
     code = models.CharField(max_length=6)
     purpose = models.CharField(max_length=20, choices=Purpose.choices)
     attempts = models.PositiveSmallIntegerField(default=0)
@@ -60,10 +61,12 @@ class OTP(models.Model):
         db_table = 'otps'
         indexes = [
             models.Index(fields=['email', 'purpose', 'is_used']),
+            models.Index(fields=['phone', 'purpose', 'is_used']),
         ]
 
     def __str__(self):
-        return f'OTP for {self.email} ({self.purpose})'
+        target = self.email or self.phone or '?'
+        return f'OTP for {target} ({self.purpose})'
 
     @property
     def is_expired(self):

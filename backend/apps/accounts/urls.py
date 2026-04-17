@@ -16,5 +16,7 @@ urlpatterns = [
     path('token/refresh/', views.RefreshTokenView.as_view(), name='token-refresh'),
     path('google/url/', views.GoogleOAuthURLView.as_view(), name='google-oauth-url'),
     path('google/callback/', views.GoogleOAuthCallbackView.as_view(), name='google-oauth-callback'),
+    path('parent/request-otp/', views.ParentRequestOTPView.as_view(), name='parent-request-otp'),
+    path('parent/verify-otp/', views.ParentVerifyOTPView.as_view(), name='parent-verify-otp'),
     path('tour-progress/', views.TourProgressView.as_view(), name='tour-progress'),
 ]

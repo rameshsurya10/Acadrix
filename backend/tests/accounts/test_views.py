@@ -24,7 +24,7 @@ class IdentifyViewTest(TestCase):
             first_name='Admin', last_name='User',
         )
 
-    @patch('apps.accounts.views.send_otp_email')
+    @patch('apps.accounts.utils.send_otp_email')
     def test_identify_email_teacher_returns_otp_method(self, mock_send):
         response = self.client.post('/api/v1/auth/identify/', {'identifier': 'teacher@test.com'})
         self.assertEqual(response.status_code, 200)
@@ -157,7 +157,7 @@ class ForgotResetPasswordViewTest(TestCase):
             first_name='Admin', last_name='User',
         )
 
-    @patch('apps.accounts.views.send_otp_email')
+    @patch('apps.accounts.utils.send_otp_email')
     def test_forgot_password_sends_otp(self, mock_send):
         response = self.client.post('/api/v1/auth/forgot-password/', {'email': 'admin@test.com'})
         self.assertEqual(response.status_code, 200)

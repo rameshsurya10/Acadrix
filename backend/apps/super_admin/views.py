@@ -27,38 +27,39 @@ class SuperAdminDashboardView(GenericAPIView):
     permission_classes = [IsSuperAdmin]
 
     def get(self, request):
-        role_counts = dict(
-            User.objects.filter(is_active=True)
-            .values_list('role')
-            .annotate(c=Count('id'))
-            .values_list('role', 'c')
-        )
-        total_users = sum(role_counts.values())
+        from apps.shared.cache_utils import cache_or_compute
 
-        recent_admins = list(
-            User.objects.filter(role='admin', is_active=True)
-            .order_by('-date_joined')[:5]
-            .values('id', 'first_name', 'last_name', 'email', 'date_joined')
-        )
-        recent_principals = list(
-            User.objects.filter(role='principal', is_active=True)
-            .order_by('-date_joined')[:5]
-            .values('id', 'first_name', 'last_name', 'email', 'date_joined')
-        )
-
-        recent_logs = list(
-            AuditLog.objects.select_related('actor', 'target_user')
-            .order_by('-created_at')[:10]
-            .values(
-                'id', 'action', 'detail', 'created_at',
-                'actor__first_name', 'actor__last_name',
-                'target_user__first_name', 'target_user__last_name',
+        def _compute():
+            role_counts = dict(
+                User.objects.filter(is_active=True)
+                .values_list('role')
+                .annotate(c=Count('id'))
+                .values_list('role', 'c')
             )
-        )
+            total_users = sum(role_counts.values())
 
-        return Response({
-            'success': True,
-            'data': {
+            recent_admins = list(
+                User.objects.filter(role='admin', is_active=True)
+                .order_by('-date_joined')[:5]
+                .values('id', 'first_name', 'last_name', 'email', 'date_joined')
+            )
+            recent_principals = list(
+                User.objects.filter(role='principal', is_active=True)
+                .order_by('-date_joined')[:5]
+                .values('id', 'first_name', 'last_name', 'email', 'date_joined')
+            )
+
+            recent_logs = list(
+                AuditLog.objects.select_related('actor', 'target_user')
+                .order_by('-created_at')[:10]
+                .values(
+                    'id', 'action', 'detail', 'created_at',
+                    'actor__first_name', 'actor__last_name',
+                    'target_user__first_name', 'target_user__last_name',
+                )
+            )
+
+            return {
                 'total_users': total_users,
                 'admins': role_counts.get('admin', 0),
                 'principals': role_counts.get('principal', 0),
@@ -67,8 +68,15 @@ class SuperAdminDashboardView(GenericAPIView):
                 'recent_admins': recent_admins,
                 'recent_principals': recent_principals,
                 'recent_activity': recent_logs,
-            },
-        })
+            }
+
+        data = cache_or_compute(
+            group='dashboard',
+            parts=('super_admin_stats',),
+            timeout=120,
+            compute=_compute,
+        )
+        return Response({'success': True, 'data': data})
 
 
 # ── User Management ────────────────────────────────────────────────

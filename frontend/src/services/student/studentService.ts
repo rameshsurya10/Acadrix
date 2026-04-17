@@ -206,4 +206,49 @@ export const studentService = {
     const { data } = await api.get('/student/grades/')
     return data.data ?? data.results ?? data
   },
+
+  /** Create a Razorpay order for the current outstanding balance (or a specific amount). */
+  async createRazorpayOrder(amount?: number): Promise<RazorpayOrder> {
+    const body = amount != null ? { amount } : {}
+    const { data } = await api.post<{ data: RazorpayOrder }>(
+      '/student/payments/razorpay/create-order/',
+      body,
+    )
+    return data.data
+  },
+
+  /** Verify signature after Razorpay Checkout success. */
+  async verifyRazorpayPayment(payload: RazorpayVerifyPayload): Promise<RazorpayVerifyResult> {
+    const { data } = await api.post<{ data: RazorpayVerifyResult }>(
+      '/student/payments/razorpay/verify/',
+      payload,
+    )
+    return data.data
+  },
+}
+
+/* ------------------------------------------------------------------ */
+/*  Razorpay types                                                     */
+/* ------------------------------------------------------------------ */
+
+export interface RazorpayOrder {
+  order_id: string
+  amount: number       // in paise
+  currency: string
+  key: string          // public razorpay key id
+  receipt_id: string
+  student_name: string
+  student_email: string
+}
+
+export interface RazorpayVerifyPayload {
+  razorpay_order_id: string
+  razorpay_payment_id: string
+  razorpay_signature: string
+}
+
+export interface RazorpayVerifyResult {
+  receipt_id: string
+  amount: string
+  paid_at: string
 }

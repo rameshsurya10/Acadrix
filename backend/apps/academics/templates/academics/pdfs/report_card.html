@@ -1,0 +1,107 @@
+{% extends "academics/pdfs/_base.html" %}
+
+{% block title %}Report Card — {{ student.name }}{% endblock %}
+
+{% block content %}
+<div class="document-title">Report Card — {{ term_name }}</div>
+
+<div style="display: flex; justify-content: space-between; margin-bottom: 12pt;">
+  <div style="width: 60%;">
+    <div class="field-row"><div class="field-label">Student Name</div><div class="field-value">{{ student.name }}</div></div>
+    <div class="field-row"><div class="field-label">Student ID</div><div class="field-value">{{ student.student_id }}</div></div>
+    <div class="field-row"><div class="field-label">Class / Section</div><div class="field-value">{{ student.grade }}{% if student.section %} - {{ student.section }}{% endif %}</div></div>
+    {% if student.house %}<div class="field-row"><div class="field-label">House</div><div class="field-value">{{ student.house }}</div></div>{% endif %}
+    {% if student.date_of_birth %}<div class="field-row"><div class="field-label">Date of Birth</div><div class="field-value">{{ student.date_of_birth }}</div></div>{% endif %}
+  </div>
+  <div style="width: 38%; text-align: right;">
+    <div class="field-row"><div class="field-label" style="width: 50%;">Academic Year</div><div class="field-value">{{ academic_year }}</div></div>
+    <div class="field-row"><div class="field-label" style="width: 50%;">Board</div><div class="field-value">{{ board }}</div></div>
+    <div class="field-row"><div class="field-label" style="width: 50%;">Status</div><div class="field-value">{{ status }}</div></div>
+  </div>
+</div>
+
+<h3>Academic Performance</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Subject</th>
+      <th class="num">Max Marks</th>
+      <th class="num">Marks Obtained</th>
+      <th>Grade</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for subject in subjects %}
+    <tr>
+      <td>{{ subject.name }}</td>
+      <td class="num">{{ subject.max }}</td>
+      <td class="num">{{ subject.obtained }}</td>
+      <td>{{ subject.grade|default:"-" }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="4" style="text-align:center; color:#888;">No subject data recorded.</td></tr>
+    {% endfor %}
+  </tbody>
+  {% if subjects %}
+  <tfoot>
+    <tr style="font-weight:700;">
+      <td>Total</td>
+      <td class="num">{{ total_marks }}</td>
+      <td class="num">{{ marks_obtained }}</td>
+      <td>{{ overall_grade|default:"-" }}</td>
+    </tr>
+  </tfoot>
+  {% endif %}
+</table>
+
+<div style="display: flex; justify-content: space-between; margin-top: 12pt;">
+  <div style="width: 48%;">
+    <h3>Summary</h3>
+    <div class="field-row"><div class="field-label">Percentage</div><div class="field-value">{{ percentage }}%</div></div>
+    {% if show_rank %}<div class="field-row"><div class="field-label">Rank</div><div class="field-value">{{ rank|default:"-" }}</div></div>{% endif %}
+    <div class="field-row"><div class="field-label">Overall Grade</div><div class="field-value">{{ overall_grade|default:"-" }}</div></div>
+  </div>
+  {% if show_attendance %}
+  <div style="width: 48%;">
+    <h3>Attendance</h3>
+    <div class="field-row"><div class="field-label">Working Days</div><div class="field-value">{{ attendance_total }}</div></div>
+    <div class="field-row"><div class="field-label">Days Present</div><div class="field-value">{{ attendance_present }}</div></div>
+  </div>
+  {% endif %}
+</div>
+
+{% if co_scholastic %}
+<h3 style="margin-top: 14pt;">Co-Scholastic Areas</h3>
+<table>
+  <thead>
+    <tr><th>Area</th><th>Grade</th></tr>
+  </thead>
+  <tbody>
+    {% for item in co_scholastic %}
+    <tr>
+      <td>{{ item.area }}</td>
+      <td>{{ item.grade }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+{% if show_remarks and remarks %}
+<h3 style="margin-top: 14pt;">Teacher Remarks</h3>
+<p style="padding: 8pt; background: #f8f9fa; border-left: 3pt solid #2b5ab5;">{{ remarks }}</p>
+{% endif %}
+
+<div class="signature-block">
+  <div class="signature">
+    <div class="signature-line">Class Teacher</div>
+  </div>
+  <div class="signature">
+    <div class="signature-line">Principal</div>
+  </div>
+</div>
+
+{% if footer_text %}
+<p style="margin-top: 20pt; font-size: 9pt; color: #666; font-style: italic;">{{ footer_text }}</p>
+{% endif %}
+{% endblock %}

@@ -1,10 +1,12 @@
 import { useState, FormEvent, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
-import { authService } from '@/services/shared/authService'
+import { authService, type ParentChild } from '@/services/shared/authService'
 import ParticleNetwork from '@/components/shared/ParticleNetwork'
 
-type Step = 'identify' | 'password' | 'set_password' | 'otp' | 'forgot' | 'reset'
+type Step =
+  | 'identify' | 'password' | 'set_password' | 'otp' | 'forgot' | 'reset'
+  | 'parent_phone' | 'parent_otp' | 'parent_select_child'
 
 function ErrorAlert({ error }: { error: string | null }) {
   if (!error) return null
@@ -79,6 +81,11 @@ export default function LoginPage() {
   const [resendCountdown, setResendCountdown] = useState(0)
   const [forgotEmail, setForgotEmail] = useState('')
 
+  // Parent flow state
+  const [parentPhone, setParentPhone] = useState('')
+  const [parentMaskedPhone, setParentMaskedPhone] = useState('')
+  const [parentChildren, setParentChildren] = useState<ParentChild[]>([])
+
   const otpRefs = useRef<(HTMLInputElement | null)[]>([])
 
   // Resend countdown timer
@@ -98,6 +105,88 @@ export default function LoginPage() {
     setUserRole('')
     setEmailHint('')
     setForgotEmail('')
+    setParentPhone('')
+    setParentMaskedPhone('')
+    setParentChildren([])
+  }
+
+  async function handleParentRequestOTP(e: FormEvent) {
+    e.preventDefault()
+    const cleaned = parentPhone.replace(/\D/g, '')
+    if (cleaned.length < 10) { setError('Enter a valid 10-digit mobile number.'); return }
+    setError(null)
+    setIsLoading(true)
+    try {
+      const result = await authService.parentRequestOTP(cleaned)
+      setParentMaskedPhone(result.masked_phone)
+      setStep('parent_otp')
+      setResendCountdown(30)
+      setOtpDigits(['', '', '', '', '', ''])
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { error?: string } } }
+      setError(axiosErr.response?.data?.error || 'Could not send OTP. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  async function handleParentVerifyOTP(e: FormEvent) {
+    e.preventDefault()
+    const code = otpDigits.join('')
+    if (code.length !== 6) { setError('Enter all 6 digits.'); return }
+    setError(null)
+    setIsLoading(true)
+    try {
+      const cleaned = parentPhone.replace(/\D/g, '')
+      const result = await authService.parentVerifyOTP(cleaned, code)
+      if ('requires_child_selection' in result && result.requires_child_selection) {
+        setParentChildren(result.children)
+        setStep('parent_select_child')
+      } else {
+        loginWithToken(result.access, result.refresh, result.user, true)
+        navigate('/')
+      }
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { error?: string } } }
+      setError(axiosErr.response?.data?.error || 'Invalid OTP.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  async function handleSelectChild(child: ParentChild) {
+    setError(null)
+    setIsLoading(true)
+    try {
+      const cleaned = parentPhone.replace(/\D/g, '')
+      const code = otpDigits.join('')
+      const result = await authService.parentVerifyOTP(cleaned, code, child.student_user_id)
+      if ('requires_child_selection' in result && result.requires_child_selection) {
+        setError('Selection failed. Please request a new OTP.')
+        return
+      }
+      loginWithToken(result.access, result.refresh, result.user, true)
+      navigate('/')
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { error?: string } } }
+      setError(axiosErr.response?.data?.error || 'Could not switch to selected child.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  async function handleParentResendOTP() {
+    if (resendCountdown > 0) return
+    setError(null)
+    try {
+      const cleaned = parentPhone.replace(/\D/g, '')
+      await authService.parentRequestOTP(cleaned)
+      setResendCountdown(30)
+      setOtpDigits(['', '', '', '', '', ''])
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { error?: string } } }
+      setError(axiosErr.response?.data?.error || 'Failed to resend OTP.')
+    }
   }
 
   async function handleIdentify(e: FormEvent) {
@@ -273,6 +362,13 @@ export default function LoginPage() {
               </div>
             </div>
             <SubmitButton isLoading={isLoading}>Continue</SubmitButton>
+            <div className="text-center pt-1">
+              <button type="button" onClick={() => { setError(null); setStep('parent_phone') }}
+                className="text-xs font-semibold text-primary hover:text-primary/80 hover:underline underline-offset-4 transition-all inline-flex items-center gap-1">
+                <span className="material-symbols-outlined text-sm">family_restroom</span>
+                Login as Parent
+              </button>
+            </div>
           </form>
         )
 
@@ -399,6 +495,87 @@ export default function LoginPage() {
             </div>
             <SubmitButton isLoading={isLoading}>Send Reset Code</SubmitButton>
           </form>
+        )
+
+      case 'parent_phone':
+        return (
+          <form onSubmit={handleParentRequestOTP} className="space-y-4 md:space-y-5">
+            <BackButton onClick={resetForm} />
+            <div className="text-center mb-4">
+              <h2 className="text-on-surface font-headline font-bold text-lg">Parent Login</h2>
+              <p className="text-on-surface-variant text-xs mt-1">Enter the mobile number registered with your child's school</p>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-2" htmlFor="parent-phone">
+                Mobile Number
+              </label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                  <span className="material-symbols-outlined text-outline/60 text-xl group-focus-within:text-primary transition-colors">smartphone</span>
+                </div>
+                <div className="absolute inset-y-0 left-11 flex items-center pointer-events-none">
+                  <span className="text-sm text-on-surface-variant font-medium">+91</span>
+                </div>
+                <input id="parent-phone" placeholder="98765 43210" type="tel" inputMode="numeric" maxLength={10}
+                  className="block w-full pl-[4.75rem] pr-4 py-3 bg-surface-container-lowest rounded-xl border border-outline-variant/25 focus:border-primary focus:ring-2 focus:ring-primary/10 focus:outline-none text-on-surface placeholder:text-outline/40 text-sm transition-all"
+                  value={parentPhone} onChange={e => setParentPhone(e.target.value.replace(/\D/g, '').slice(0, 10))} required autoFocus
+                />
+              </div>
+            </div>
+            <SubmitButton isLoading={isLoading}>Send OTP</SubmitButton>
+          </form>
+        )
+
+      case 'parent_otp':
+        return (
+          <form onSubmit={handleParentVerifyOTP} className="space-y-4 md:space-y-5">
+            <BackButton onClick={() => setStep('parent_phone')} />
+            <div className="text-center mb-4">
+              <p className="text-on-surface-variant text-xs">OTP sent via SMS to</p>
+              <p className="text-on-surface font-semibold">+91 {parentMaskedPhone}</p>
+            </div>
+            <OTPInputs digits={otpDigits} onChange={handleOTPChange} onKeyDown={handleOTPKeyDown} onPaste={handleOTPPaste} inputRefs={otpRefs} />
+            <SubmitButton isLoading={isLoading}>Verify & Continue</SubmitButton>
+            <div className="text-center mt-3">
+              {resendCountdown > 0 ? (
+                <p className="text-xs text-on-surface-variant">Resend OTP in {resendCountdown}s</p>
+              ) : (
+                <button type="button" onClick={handleParentResendOTP}
+                  className="text-xs font-semibold text-primary hover:underline underline-offset-4">
+                  Resend OTP
+                </button>
+              )}
+            </div>
+          </form>
+        )
+
+      case 'parent_select_child':
+        return (
+          <div className="space-y-4 md:space-y-5">
+            <BackButton onClick={() => setStep('parent_otp')} />
+            <div className="text-center mb-4">
+              <h2 className="text-on-surface font-headline font-bold text-lg">Select Child</h2>
+              <p className="text-on-surface-variant text-xs mt-1">You have {parentChildren.length} children. Pick one to view their dashboard.</p>
+            </div>
+            <div className="space-y-2">
+              {parentChildren.map(child => (
+                <button key={child.student_user_id} type="button" disabled={isLoading}
+                  onClick={() => handleSelectChild(child)}
+                  className="w-full flex items-center gap-3 px-4 py-3 bg-surface-container-lowest hover:bg-primary/5 rounded-xl border border-outline-variant/25 hover:border-primary/30 transition-all text-left disabled:opacity-60 disabled:cursor-not-allowed">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <span className="material-symbols-outlined text-primary text-xl">school</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-on-surface font-semibold text-sm truncate">{child.name}</p>
+                    <p className="text-on-surface-variant text-xs truncate">
+                      {child.student_id}{child.section ? ` · ${child.section}` : ''}
+                    </p>
+                  </div>
+                  <span className="material-symbols-outlined text-outline/40 text-lg">chevron_right</span>
+                </button>
+              ))}
+            </div>
+          </div>
         )
 
       case 'reset':

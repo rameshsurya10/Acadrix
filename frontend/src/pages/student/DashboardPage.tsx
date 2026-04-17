@@ -1,8 +1,7 @@
-import { useEffect, useState } from 'react'
 import PageLayout from '@/components/layout/PageLayout'
 import { SkeletonDashboard } from '@/components/shared/Skeleton'
 import { useAuth } from '@/contexts/AuthContext'
-import { studentService, type StudentDashboardData } from '@/services/student/studentService'
+import { useStudentDashboard } from '@/hooks/queries/useStudentDashboard'
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -23,21 +22,9 @@ const BORDER_COLORS = ['border-primary', 'border-secondary', 'border-tertiary']
 
 export default function StudentDashboardPage() {
   const { user } = useAuth()
-  const [data, setData] = useState<StudentDashboardData | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const { data, isLoading, error, refetch } = useStudentDashboard()
 
-  useEffect(() => {
-    let cancelled = false
-    studentService
-      .getDashboard()
-      .then((d) => { if (!cancelled) setData(d) })
-      .catch((err) => { if (!cancelled) setError(err?.response?.data?.detail ?? 'Failed to load dashboard.') })
-      .finally(() => { if (!cancelled) setLoading(false) })
-    return () => { cancelled = true }
-  }, [])
-
-  if (loading) {
+  if (isLoading) {
     return (
       <PageLayout>
         <SkeletonDashboard />
@@ -46,14 +33,17 @@ export default function StudentDashboardPage() {
   }
 
   if (error || !data) {
+    const errorMsg =
+      (error as { response?: { data?: { detail?: string } } })?.response?.data?.detail
+      ?? 'Failed to load dashboard.'
     return (
       <PageLayout>
         <main className="max-w-7xl mx-auto px-4 md:px-6 py-10 pb-32">
           <div className="bg-error/10 text-error rounded-xl p-8 text-center">
             <span className="material-symbols-outlined text-4xl mb-2 block">error</span>
-            <p className="font-headline text-lg font-bold">{error ?? 'Something went wrong'}</p>
+            <p className="font-headline text-lg font-bold">{errorMsg}</p>
             <button
-              onClick={() => window.location.reload()}
+              onClick={() => refetch()}
               className="mt-4 px-6 py-2 bg-error text-on-error rounded-lg text-sm font-bold"
             >
               Retry

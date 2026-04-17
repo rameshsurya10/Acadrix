@@ -1,4 +1,4 @@
-"""Test settings - uses SQLite to avoid remote DB dependency."""
+"""Test settings - SQLite, no remote services, eager Celery."""
 from config.settings import *  # noqa: F401,F403
 
 DATABASES = {
@@ -16,4 +16,18 @@ REST_FRAMEWORK['DEFAULT_THROTTLE_RATES'] = {
     'identify': '1000/minute',
     'otp': '1000/minute',
     'forgot_password': '1000/minute',
+}
+
+# Run Celery tasks synchronously inside the calling thread (no broker needed)
+CELERY_TASK_ALWAYS_EAGER = True
+CELERY_TASK_EAGER_PROPAGATES = True
+CELERY_BROKER_URL = 'memory://'
+CELERY_RESULT_BACKEND = 'cache+memory://'
+
+# In-memory cache so tests don't need Redis
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'acadrix-test',
+    }
 }
